@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Leads | Home Fest</title>
+<link rel="stylesheet" href="/css/leads.css">
+</head>
+<body>
+
+<h1>CRM - Leads</h1>
+
+<div class="form">
+<input id="nome" placeholder="Nome">
+<input id="telefone" placeholder="Telefone">
+<input id="email" placeholder="Email">
+<input id="cidade" placeholder="Cidade">
+<input id="bairro" placeholder="Bairro">
+<input id="origem" placeholder="Origem">
+
+<select id="status">
+<option value="novo">Novo</option>
+<option value="em_atendimento">Em atendimento</option>
+<option value="orcamento_enviado">Orçamento enviado</option>
+<option value="follow_up">Follow-up</option>
+<option value="fechado">Fechado</option>
+<option value="perdido">Perdido</option>
+</select>
+
+<textarea id="observacoes" placeholder="Observações"></textarea>
+<button onclick="salvar()">Salvar</button>
+</div>
+
+<table>
+<thead>
+<tr><th>Nome</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ação</th></tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+<script src="/js/leads.js"></script>
+</body>
+</html>

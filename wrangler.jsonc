@@ -1,0 +1,16 @@
+{
+  "name": "homefest-sistema",
+  "compatibility_date": "2026-01-21",
+
+  "assets": {
+    "directory": "./public"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "homefest-db",
+      "database_id": "7a746f0a-2d1a-464b-8c95-cdbb3f8628e0"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+
+body{font-family:Arial;background:#f4f6f8;padding:20px}
+.form input,textarea,select{display:block;margin:6px 0;padding:6px;width:280px}
+table{margin-top:20px;border-collapse:collapse;background:#fff}
+td,th{border:1px solid #ccc;padding:8px}
