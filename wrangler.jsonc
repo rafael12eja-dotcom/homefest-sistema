@@ -1,0 +1,8 @@
+{
+  "name": "homefest-sistema",
+  "compatibility_date": "2026-01-21",
+  "main": "src/worker.js",
+  "assets": {
+    "directory": "./public"
+  }
+}
