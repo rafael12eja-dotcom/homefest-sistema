@@ -1,0 +1,7 @@
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse: collapse; background:#fff; }
+th, td { border: 1px solid #eee; padding: 10px 12px; font-size: 14px; }
+th { background:#fafafa; }
+.btn { padding: 8px 10px; border-radius: 8px; border: 1px solid #ddd; background:#fff; cursor:pointer; }
+.btn-primary { background: var(--preto); color: var(--dourado); border-color: var(--preto); }
+.muted { color:#666; }

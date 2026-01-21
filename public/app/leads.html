@@ -1,43 +1,137 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Leads | Home Fest</title>
-<link rel="stylesheet" href="/css/leads.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leads | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/leads.css">
 </head>
 <body>
 
-<h1>CRM - Leads</h1>
+  <aside class="sidebar">
+    <h2>Home Fest</h2>
+    <a href="/app/dashboard.html">Dashboard</a>
+    <a href="/app/leads.html">Leads</a>
+    <a href="/app/clientes.html">Clientes</a>
+    <a href="/app/eventos.html">Eventos</a>
+    <a href="/app/financeiro.html">Financeiro</a>
+  </aside>
 
-<div class="form">
-<input id="nome" placeholder="Nome">
-<input id="telefone" placeholder="Telefone">
-<input id="email" placeholder="Email">
-<input id="cidade" placeholder="Cidade">
-<input id="bairro" placeholder="Bairro">
-<input id="origem" placeholder="Origem">
+  <main class="main">
+    <h1>CRM - Leads</h1>
 
-<select id="status">
-<option value="novo">Novo</option>
-<option value="em_atendimento">Em atendimento</option>
-<option value="orcamento_enviado">Orçamento enviado</option>
-<option value="follow_up">Follow-up</option>
-<option value="fechado">Fechado</option>
-<option value="perdido">Perdido</option>
-</select>
+    <div class="card">
+      <h3>Novo Lead</h3>
+      <div class="grid">
+        <input id="nome" placeholder="Nome">
+        <input id="telefone" placeholder="Telefone">
+        <input id="email" placeholder="Email">
+        <input id="cidade" placeholder="Cidade">
+        <input id="bairro" placeholder="Bairro">
+        <input id="origem" placeholder="Origem (WhatsApp, Instagram, Google...)">
+        <select id="status">
+          <option value="novo">Novo</option>
+          <option value="em_atendimento">Em atendimento</option>
+          <option value="orcamento_enviado">Orçamento enviado</option>
+          <option value="follow_up">Follow-up</option>
+          <option value="fechado">Fechado</option>
+          <option value="perdido">Perdido</option>
+        </select>
+        <textarea id="observacoes" placeholder="Observações"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="salvarLead()">Salvar Lead</button>
+      </div>
+    </div>
 
-<textarea id="observacoes" placeholder="Observações"></textarea>
-<button onclick="salvar()">Salvar</button>
-</div>
+    <div class="card">
+      <h3>Leads</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>Cidade</th>
+              <th>Status</th>
+              <th>Origem</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
 
-<table>
-<thead>
-<tr><th>Nome</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ação</th></tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
+  <!-- MODAL FECHAR CONTRATO -->
+  <div id="modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Fechar contrato</h3>
+        <button class="icon-btn" onclick="fecharModal()">✕</button>
+      </div>
 
-<script src="/js/leads.js"></script>
+      <div class="modal-body">
+        <p class="muted">Lead: <strong id="modalLeadNome"></strong></p>
+
+        <div class="grid-2">
+          <label>
+            Tipo de evento
+            <select id="m_tipo_evento">
+              <option value="Infantil">Infantil</option>
+              <option value="Adulto">Adulto</option>
+              <option value="Casamento">Casamento</option>
+              <option value="Corporativo">Corporativo</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+
+          <label>
+            Data do evento
+            <input id="m_data_evento" type="date" />
+          </label>
+
+          <label>
+            Convidados (estimativa)
+            <input id="m_convidados" type="number" min="0" placeholder="0" />
+          </label>
+
+          <label>
+            Valor total do contrato (R$)
+            <input id="m_valor_total" type="number" min="0" step="0.01" placeholder="0,00" />
+          </label>
+
+          <label>
+            Valor do sinal (R$)
+            <input id="m_valor_sinal" type="number" min="0" step="0.01" placeholder="0,00" />
+          </label>
+
+          <label>
+            Forma de pagamento
+            <select id="m_forma_pagamento">
+              <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+              <option value="À vista (desconto)">À vista (desconto)</option>
+              <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="block">
+          Observações internas (opcional)
+          <textarea id="m_obs" placeholder="Ex: combinado decoração inclusa, detalhes do pacote, etc."></textarea>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-primary" onclick="confirmarFechamento()">Confirmar fechamento</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/leads.js"></script>
 </body>
 </html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clientes | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/clientes.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>Home Fest</h2>
+    <a href="/app/dashboard.html">Dashboard</a>
+    <a href="/app/leads.html">Leads</a>
+    <a href="/app/clientes.html">Clientes</a>
+    <a href="/app/eventos.html">Eventos</a>
+    <a href="/app/financeiro.html">Financeiro</a>
+  </aside>
+
+  <main class="main">
+    <h1>Clientes</h1>
+
+    <div class="card">
+      <h3>Lista de clientes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>Cidade</th>
+              <th>Bairro</th>
+              <th>Último evento</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="clientesLista"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="detalheCard" style="display:none;">
+      <h3>Detalhes do cliente</h3>
+      <div id="detalhe"></div>
+    </div>
+  </main>
+
+  <script src="/js/clientes.js"></script>
+</body>
+</html>

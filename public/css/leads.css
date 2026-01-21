@@ -1,5 +1,144 @@
+/* Complementos para a tela de leads (usa /css/layout.css como base) */
 
-body{font-family:Arial;background:#f4f6f8;padding:20px}
-.form input,textarea,select{display:block;margin:6px 0;padding:6px;width:280px}
-table{margin-top:20px;border-collapse:collapse;background:#fff}
-td,th{border:1px solid #ccc;padding:8px}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.grid textarea {
+  grid-column: 1 / -1;
+  min-height: 90px;
+}
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th, td {
+  border: 1px solid #eee;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  color: #111;
+  background: #fafafa;
+}
+
+.btn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+}
+
+.btn-danger {
+  border-color: #ffd4d4;
+  background: #fff6f6;
+}
+
+.btn-success {
+  border-color: #e6d3a4;
+  background: #fffaf0;
+}
+
+.muted { color: #666; }
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.modal.hidden { display: none; }
+
+.modal-content {
+  width: min(760px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #eee;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+.modal-header, .modal-footer {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #fff;
+}
+
+.modal-header {
+  border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.icon-btn {
+  border: 1px solid #eee;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+label { font-size: 13px; color: #222; display: grid; gap: 6px; }
+label input, label select, textarea {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.block { margin-top: 12px; }
+
+.btn-primary, .btn-ghost {
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+}
+
+.btn-primary {
+  background: var(--preto);
+  color: var(--dourado);
+  border-color: var(--preto);
+}
+
+.btn-ghost {
+  background: #fff;
+  color: #111;
+}
