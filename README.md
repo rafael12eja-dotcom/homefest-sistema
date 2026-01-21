@@ -1,8 +1,11 @@
 # Home Fest & Eventos — Sistema
 
-Sistema CRM, financeiro e operacional da Home Fest & Eventos.
+Interface base (UI) do sistema interno: CRM, financeiro e operacional.
 
-Tecnologia:
-- Cloudflare Workers + Assets
-- Banco D1 (em breve)
-- Storage R2 (contratos)
+## Stack
+- Cloudflare Workers + Assets (sem build)
+- D1 (próxima etapa)
+- R2 (contratos — próxima etapa)
+
+## Próximo passo
+- Conectar dados reais (D1) e autenticação (login).
