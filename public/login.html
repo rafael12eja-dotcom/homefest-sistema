@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Entrar • Sistema Home Fest</title>
+  <link rel="stylesheet" href="/auth.css" />
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <main class="auth">
+    <section class="card" role="region" aria-label="Login">
+      <header class="brand">
+        <div class="mark" aria-hidden="true">HF</div>
+        <div>
+          <div class="name">Home Fest & Eventos</div>
+          <div class="sub">Acesso ao Sistema</div>
+        </div>
+      </header>
+
+      <h1>Entrar</h1>
+      <p class="muted">Use seu usuário e senha para acessar o painel.</p>
+
+      <form id="loginForm" class="form">
+        <label>
+          <span>Usuário</span>
+          <input name="user" autocomplete="username" required placeholder="ex.: admin" />
+        </label>
+
+        <label>
+          <span>Senha</span>
+          <input name="pass" type="password" autocomplete="current-password" required placeholder="••••••••" />
+        </label>
+
+        <button class="btn" type="submit">Entrar</button>
+        <div id="msg" class="msg" role="status" aria-live="polite"></div>
+      </form>
+
+      <footer class="foot">
+        <span class="dot"></span>
+        <span>Ambiente protegido • Cloudflare</span>
+      </footer>
+    </section>
+  </main>
+
+  <script src="/auth.js"></script>
+</body>
+</html>

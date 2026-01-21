@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistema • Home Fest & Eventos</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" aria-label="Navegação">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">HF</div>
+        <div class="brand-text">
+          <div class="brand-name">Home Fest</div>
+          <div class="brand-sub">Sistema</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item is-active" data-view="dashboard">
+          <span class="nav-ico">🏠</span><span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="clientes">
+          <span class="nav-ico">👥</span><span>Clientes</span>
+        </button>
+        <button class="nav-item" data-view="eventos">
+          <span class="nav-ico">🎉</span><span>Festas</span>
+        </button>
+        <button class="nav-item" data-view="financeiro">
+          <span class="nav-ico">💰</span><span>Financeiro</span>
+        </button>
+        <button class="nav-item" data-view="contratos">
+          <span class="nav-ico">📄</span><span>Contratos</span>
+        </button>
+        <button class="nav-item" data-view="patrimonio">
+          <span class="nav-ico">🏷️</span><span>Patrimônio</span>
+        </button>
+        <button class="nav-item" data-view="relatorios">
+          <span class="nav-ico">📊</span><span>Relatórios</span>
+        </button>
+
+        <div class="nav-sep"></div>
+
+        <button class="nav-item" data-view="config">
+          <span class="nav-ico">⚙️</span><span>Configurações</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="pill">Versão: <strong>0.1</strong></div>
+        <div class="muted tiny">© Home Fest & Eventos</div>
+      </div>
+    </aside>
+
+    <main class="main" role="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-only" id="btnMenu" aria-label="Abrir menu">☰</button>
+
+        <div class="topbar-left">
+          <div class="page-title" id="pageTitle">Dashboard</div>
+          <div class="page-hint" id="pageHint">Visão geral do dia e atalhos rápidos.</div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="search">
+            <span class="search-ico" aria-hidden="true">⌕</span>
+            <input id="globalSearch" type="search" placeholder="Buscar cliente, festa, contrato..." />
+          </div>
+          <button class="btn btn-primary" id="btnQuickAdd">+ Novo</button>
+          <a class="btn btn-ghost" href="/logout" title="Sair">Sair</a>
+          <div class="user">
+            <div class="avatar" aria-hidden="true">R</div>
+            <div class="user-meta">
+              <div class="user-name">Rafael</div>
+              <div class="muted tiny">Admin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+
+        <!-- DASHBOARD -->
+        <section class="view is-active" id="view-dashboard">
+          <div class="grid cards">
+            <div class="card">
+              <div class="card-kpi">
+                <div>
+                  <div class="muted tiny">Festas (próximos 30 dias)</div>
+                  <div class="kpi">12</div>
+                </div>
+                <div class="kpi-ico">🎉</div>
+              </div>
+              <div class="progress">
+                <div class="progress-bar" style="width: 58%"></div>
+              </div>
+              <div class="muted tiny">58% com checklist iniciado</div>
+            </div>
+
+            <div class="card">
+              <div class="card-kpi">
+                <div>
+                  <div class="muted tiny">Orçamentos em andamento</div>
+                  <div class="kpi">19</div>
+                </div>
+                <div class="kpi-ico">🧾</div>
+              </div>
+              <div class="muted tiny">Últimas 24h: +3</div>
+            </div>
+
+            <div class="card">
+              <div class="card-kpi">
+                <div>
+                  <div class="muted tiny">Caixa (mês)</div>
+                  <div class="kpi">R$ 0,00</div>
+                </div>
+                <div class="kpi-ico">💰</div>
+              </div>
+              <div class="muted tiny">Entradas – Saídas</div>
+            </div>
+
+            <div class="card highlight">
+              <div class="card-kpi">
+                <div>
+                  <div class="muted tiny">Ação rápida</div>
+                  <div class="kpi">Criar festa</div>
+                </div>
+                <div class="kpi-ico">⚡</div>
+              </div>
+              <button class="btn btn-primary w-full" data-action="go-eventos">+ Nova festa</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Próximas festas</div>
+                <div class="muted tiny">Exemplo de lista. Depois vamos puxar do banco.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-ghost">Filtrar</button>
+                <button class="btn btn-ghost">Exportar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th class="right">Valor</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>22/02</td>
+                    <td>Renata</td>
+                    <td>Infantil</td>
+                    <td><span class="tag tag-warn">Checklist</span></td>
+                    <td class="right">R$ 12.210,00</td>
+                    <td class="right"><button class="btn btn-ghost btn-sm">Abrir</button></td>
+                  </tr>
+                  <tr>
+                    <td>01/02</td>
+                    <td>Cliente • Almoço</td>
+                    <td>Corporativo</td>
+                    <td><span class="tag tag-ok">Confirmado</span></td>
+                    <td class="right">R$ 0,00</td>
+                    <td class="right"><button class="btn btn-ghost btn-sm">Abrir</button></td>
+                  </tr>
+                  <tr>
+                    <td>25/01</td>
+                    <td>Cliente • 14 pessoas</td>
+                    <td>Domiciliar</td>
+                    <td><span class="tag">Orçamento</span></td>
+                    <td class="right">R$ 0,00</td>
+                    <td class="right"><button class="btn btn-ghost btn-sm">Abrir</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- CLIENTES -->
+        <section class="view" id="view-clientes">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Clientes</div>
+                <div class="muted tiny">Cadastro, contatos, histórico e contratos.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-primary" data-modal="novoCliente">+ Novo cliente</button>
+              </div>
+            </div>
+
+            <div class="filters">
+              <div class="field">
+                <label>Buscar</label>
+                <input placeholder="Nome, telefone, e-mail..." />
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <select>
+                  <option>Todos</option>
+                  <option>Ativos</option>
+                  <option>Inativos</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Origem</label>
+                <select>
+                  <option>Todas</option>
+                  <option>Instagram</option>
+                  <option>Google</option>
+                  <option>Indicação</option>
+                  <option>WhatsApp</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>&nbsp;</label>
+                <button class="btn btn-ghost">Aplicar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Contato</th>
+                    <th>Origem</th>
+                    <th class="right">Festas</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Renata</td>
+                    <td class="muted">+55 (31) 00000-0000</td>
+                    <td><span class="tag">WhatsApp</span></td>
+                    <td class="right">1</td>
+                    <td class="right"><button class="btn btn-ghost btn-sm">Ver</button></td>
+                  </tr>
+                  <tr>
+                    <td>Amanda</td>
+                    <td class="muted">+55 (31) 00000-0000</td>
+                    <td><span class="tag">Instagram</span></td>
+                    <td class="right">0</td>
+                    <td class="right"><button class="btn btn-ghost btn-sm">Ver</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- FESTAS -->
+        <section class="view" id="view-eventos">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Festas</div>
+                <div class="muted tiny">Do orçamento ao pós-evento.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-primary" data-modal="novaFesta">+ Nova festa</button>
+              </div>
+            </div>
+
+            <div class="grid two">
+              <div class="card">
+                <div class="card-title">Pipeline</div>
+                <div class="muted tiny">Orçamento → Fechado → Produção → Evento → Pós</div>
+                <div class="pipeline">
+                  <div class="col">
+                    <div class="col-h">Orçamento</div>
+                    <div class="chip">3</div>
+                  </div>
+                  <div class="col">
+                    <div class="col-h">Fechado</div>
+                    <div class="chip">2</div>
+                  </div>
+                  <div class="col">
+                    <div class="col-h">Produção</div>
+                    <div class="chip">1</div>
+                  </div>
+                  <div class="col">
+                    <div class="col-h">Pós</div>
+                    <div class="chip">0</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-title">Checklist padrão</div>
+                <div class="muted tiny">Exemplo (vamos editar depois por tipo de festa)</div>
+                <div class="checklist">
+                  <label class="ck"><input type="checkbox" /> Confirmar pagamento</label>
+                  <label class="ck"><input type="checkbox" /> Confirmar equipe</label>
+                  <label class="ck"><input type="checkbox" /> Lista de compras</label>
+                  <label class="ck"><input type="checkbox" /> Separar itens do patrimônio</label>
+                  <label class="ck"><input type="checkbox" /> Confirmar logística</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FINANCEIRO -->
+        <section class="view" id="view-financeiro">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Financeiro</div>
+                <div class="muted tiny">Caixa, custos por festa e lucro.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-primary" data-modal="novaMov">+ Lançamento</button>
+              </div>
+            </div>
+
+            <div class="grid three">
+              <div class="card">
+                <div class="muted tiny">Entradas (mês)</div>
+                <div class="kpi">R$ 0,00</div>
+              </div>
+              <div class="card">
+                <div class="muted tiny">Saídas (mês)</div>
+                <div class="kpi">R$ 0,00</div>
+              </div>
+              <div class="card">
+                <div class="muted tiny">Resultado (mês)</div>
+                <div class="kpi">R$ 0,00</div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th class="right">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>—</td>
+                    <td><span class="tag">Entrada</span></td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="right">R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- CONTRATOS -->
+        <section class="view" id="view-contratos">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Contratos</div>
+                <div class="muted tiny">Upload e vínculo com clientes/festas.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-primary" data-modal="uploadContrato">+ Enviar contrato</button>
+              </div>
+            </div>
+
+            <div class="empty">
+              <div class="empty-ico">📄</div>
+              <div class="empty-title">Em breve</div>
+              <div class="muted">Vamos integrar com Cloudflare R2 e permissões.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PATRIMÔNIO -->
+        <section class="view" id="view-patrimonio">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Patrimônio</div>
+                <div class="muted tiny">Inventário, manutenção e uso por festa.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-primary" data-modal="novoItem">+ Novo item</button>
+              </div>
+            </div>
+
+            <div class="grid two">
+              <div class="card">
+                <div class="card-title">Categorias</div>
+                <div class="muted tiny">Ex.: mesas, cadeiras, louças, equipamentos</div>
+                <div class="chips">
+                  <span class="tag">Mesas</span>
+                  <span class="tag">Cadeiras</span>
+                  <span class="tag">Louças</span>
+                  <span class="tag">Estruturas</span>
+                  <span class="tag">Decoração</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title">Controle</div>
+                <div class="muted tiny">Entrada/saída por festa e status (ok/manutenção)</div>
+                <div class="checklist">
+                  <label class="ck"><input type="checkbox" checked /> Registrar utilização por festa</label>
+                  <label class="ck"><input type="checkbox" /> Registrar manutenção</label>
+                  <label class="ck"><input type="checkbox" /> Alertas de reposição</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RELATÓRIOS -->
+        <section class="view" id="view-relatorios">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Relatórios</div>
+                <div class="muted tiny">Resultados por período, por tipo de festa e por canal.</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-ghost">Exportar CSV</button>
+                <button class="btn btn-ghost">Exportar PDF</button>
+              </div>
+            </div>
+
+            <div class="grid two">
+              <div class="card">
+                <div class="card-title">Lucro por festa</div>
+                <div class="muted tiny">Receita – custo – despesas extras</div>
+                <div class="chart-placeholder">📈 Gráfico (próxima etapa)</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Canais de venda</div>
+                <div class="muted tiny">Instagram, Google, Indicação…</div>
+                <div class="chart-placeholder">📊 Gráfico (próxima etapa)</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONFIG -->
+        <section class="view" id="view-config">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Configurações</div>
+                <div class="muted tiny">Marca, permissões e padrões.</div>
+              </div>
+            </div>
+
+            <div class="grid two">
+              <div class="card">
+                <div class="card-title">Identidade</div>
+                <div class="muted tiny">Cores/estilo em um só lugar.</div>
+                <div class="field">
+                  <label>Cor principal (accent)</label>
+                  <input id="accentInput" value="#d4a84f" />
+                </div>
+                <button class="btn btn-primary" id="applyAccent">Aplicar</button>
+              </div>
+
+              <div class="card">
+                <div class="card-title">Segurança</div>
+                <div class="muted tiny">Próximo passo: login e usuários.</div>
+                <div class="chips">
+                  <span class="tag tag-ok">HTTPS</span>
+                  <span class="tag tag-ok">Cloudflare Edge</span>
+                  <span class="tag tag-warn">Login pendente</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL (reutilizável) -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title" id="modalTitle">Novo</div>
+          <div class="muted tiny" id="modalHint">Preencha os dados.</div>
+        </div>
+        <button class="icon-btn" data-close="1" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close="1">Cancelar</button>
+        <button class="btn btn-primary" id="modalSave">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
