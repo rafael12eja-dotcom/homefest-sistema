@@ -140,12 +140,88 @@
       </div>
 
       <div class="tab-panel" id="panel">
-        <div class="empty">
-          <div class="empty-title">Em construção (Fase 2.2)</div>
-          <div class="empty-text">Aqui vai virar uma lista completa por categoria usando a tabela <code>evento_itens</code>.</div>
+
+        <div id="panel-equipe" class="panel-inner">
+          <div class="tab-head">
+            <div>
+              <h3 style="margin:0">Equipe</h3>
+              <p class="muted" style="margin:6px 0 0">Cadastre funções e custos da equipe desta festa.</p>
+            </div>
+            <div class="tab-actions">
+              <div class="pill">Custo equipe: <strong id="equipeTotal">R$ 0,00</strong></div>
+              <button class="btn-primary" id="btnAddEquipe">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div id="equipeList" class="table-wrap"></div>
         </div>
+
+        <div id="panel-placeholder" class="panel-inner hidden">
+          <div class="empty">
+            <div class="empty-title">Em construção</div>
+            <div class="empty-text">Este módulo será conectado à tabela <code>evento_itens</code> em breve.</div>
+          </div>
+        </div>
+
       </div>
     </section>
+
+    <!-- Modal Equipe -->
+    <div id="modalEquipe" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="modalEquipeTitle">Adicionar membro</h3>
+          <button class="btn-ghost" id="btnCloseEquipe">Fechar</button>
+        </div>
+
+        <div class="grid">
+          <label>
+            Função
+            <select id="eqItem"></select>
+          </label>
+
+          <label>
+            Fornecedor
+            <input id="eqFornecedor" placeholder="Equipe própria / Nome do fornecedor" />
+          </label>
+
+          <label>
+            Quantidade
+            <input id="eqQtd" type="number" min="0" step="1" value="1" />
+          </label>
+
+          <label>
+            Unidade
+            <select id="eqUnidade">
+              <option value="pessoa">pessoa</option>
+              <option value="diaria">diária</option>
+              <option value="hora">hora</option>
+              <option value="evento">evento</option>
+            </select>
+          </label>
+
+          <label>
+            Valor unitário (R$)
+            <input id="eqVU" inputmode="decimal" placeholder="0,00" />
+          </label>
+
+          <label>
+            Total (R$)
+            <input id="eqVT" inputmode="decimal" placeholder="0,00" />
+          </label>
+
+          <label class="span-2">
+            Observação
+            <input id="eqObs" placeholder="Horário, uniforme, deslocamento, etc." />
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-ghost" id="btnCancelEquipe">Cancelar</button>
+          <button class="btn-primary" id="btnSaveEquipe">Salvar</button>
+        </div>
+      </div>
+    </div>
 
   </main>
 

@@ -5,6 +5,7 @@ import { eventoItensAPI } from './routes/evento_itens.js';
 import { financeiroAPI } from './routes/financeiro.js';
 import { dashboardAPI } from './routes/dashboard.js';
 import { authAPI, requireAuth } from './routes/auth.js';
+import { equipeHandler, equipeItemHandler } from './routes/equipe.js';
 
 export default {
   async fetch(request, env) {
@@ -55,6 +56,14 @@ export default {
     if (url.pathname.startsWith('/api/leads')) return leadsAPI(request, env);
     if (url.pathname.startsWith('/api/clientes')) return clientesAPI(request, env);
     if (url.pathname.startsWith('/api/eventos-itens')) return eventoItensAPI(request, env);
+
+    // Equipe (Central da Festa)
+    const mEquipe = url.pathname.match(/^\/api\/eventos\/(\d+)\/equipe\/?$/);
+    if (mEquipe) return equipeHandler(request, env, null, { eventoId: mEquipe[1] });
+
+    const mEquipeItem = url.pathname.match(/^\/api\/eventos\/(\d+)\/equipe\/(\d+)\/?$/);
+    if (mEquipeItem) return equipeItemHandler(request, env, null, { eventoId: mEquipeItem[1], itemId: mEquipeItem[2] });
+
     if (url.pathname.startsWith('/api/eventos')) return eventosAPI(request, env);
     if (url.pathname.startsWith('/api/financeiro')) return financeiroAPI(request, env);
     if (url.pathname.startsWith('/api/dashboard')) return dashboardAPI(request, env);
