@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Festas | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/festas.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>Home Fest</h2>
+    <a href="/app/dashboard.html">Dashboard</a>
+    <a href="/app/leads.html">Leads</a>
+    <a href="/app/clientes.html">Clientes</a>
+    <a class="active" href="/app/festas.html">Festas</a>
+    <a href="/app/financeiro.html">Financeiro</a>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="title">Festas</h1>
+        <p class="muted">Lista de eventos e acesso à Central da Festa</p>
+      </div>
+      <button class="btn-primary" id="btnNova">+ Nova festa</button>
+    </div>
+
+    <section class="card">
+      <div class="form-row">
+        <input id="busca" placeholder="Buscar por cliente, tipo ou contrato..." />
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="orcamento">Orçamento</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="fechado">Fechado</option>
+          <option value="em_producao">Em produção</option>
+          <option value="realizado">Realizado</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Convidados</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Contrato</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="modal-backdrop" id="modalBackdrop" hidden></div>
+    <div class="modal" id="modalNova" hidden>
+      <div class="modal-head">
+        <div>
+          <h3>Nova Festa</h3>
+          <p class="muted">Selecione o cliente e preencha os dados básicos</p>
+        </div>
+        <button class="btn-ghost" id="btnFecharModal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <label>
+            Cliente
+            <select id="cliente_id"></select>
+          </label>
+          <label>
+            Tipo de festa
+            <select id="tipo_evento">
+              <option value="Infantil">Infantil</option>
+              <option value="Adulto">Adulto</option>
+              <option value="Casamento">Casamento</option>
+              <option value="Corporativo">Corporativo</option>
+              <option value="Domiciliar">Domiciliar</option>
+              <option value="Coquetel">Coquetel</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+          <label>
+            Data
+            <input type="date" id="data_evento" />
+          </label>
+          <label>
+            Convidados
+            <input type="number" id="convidados" min="0" />
+          </label>
+          <label>
+            Valor total (R$)
+            <input type="number" id="valor_total" min="0" step="0.01" />
+          </label>
+          <label>
+            Status
+            <select id="status">
+              <option value="orcamento">Orçamento</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="fechado">Fechado</option>
+              <option value="em_producao">Em produção</option>
+              <option value="realizado">Realizado</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </label>
+          <label class="span-2">
+            Forma de pagamento
+            <select id="forma_pagamento">
+              <option value="">—</option>
+              <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+              <option value="À vista (desconto)">À vista (desconto)</option>
+              <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-ghost" id="btnCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarNova">Criar festa</button>
+      </div>
+    </div>
+
+  </main>
+  <script src="/js/festas.js"></script>
+</body>
+</html>

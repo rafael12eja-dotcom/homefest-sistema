@@ -14,5 +14,9 @@
       "database_name": "homefest-db",
       "database_id": "7a746f0a-2d1a-464b-8c95-cdbb3f8628e0"
     }
-  ]
+  ],
+
+  "vars": {
+    "ADMIN_USER": "admin"
+  }
 }
