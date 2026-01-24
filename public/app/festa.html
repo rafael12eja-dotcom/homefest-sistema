@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Central da Festa | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/festa.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>Home Fest</h2>
+    <a href="/app/dashboard.html">Dashboard</a>
+    <a href="/app/leads.html">Leads</a>
+    <a href="/app/clientes.html">Clientes</a>
+    <a class="active" href="/app/festas.html">Festas</a>
+    <a href="/app/financeiro.html">Financeiro</a>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="title">Central da Festa</h1>
+        <p class="muted" id="subtitulo">Carregando…</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn-ghost" href="/app/festas.html">← Voltar</a>
+        <button class="btn-primary" id="btnSalvar">Salvar</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <section class="card">
+        <h3>Resumo</h3>
+        <div class="badges">
+          <span class="badge" id="badgeStatus">Status</span>
+          <span class="badge gold" id="badgeContrato">Contrato</span>
+        </div>
+
+        <div class="summary">
+          <div>
+            <div class="k">Cliente</div>
+            <div class="v" id="clienteNome">—</div>
+          </div>
+          <div>
+            <div class="k">Telefone</div>
+            <div class="v"><a id="clienteTelefone" href="#" target="_blank">—</a></div>
+          </div>
+          <div>
+            <div class="k">Data</div>
+            <div class="v" id="eventoData">—</div>
+          </div>
+          <div>
+            <div class="k">Convidados</div>
+            <div class="v" id="eventoConvidados">—</div>
+          </div>
+          <div>
+            <div class="k">Valor (R$)</div>
+            <div class="v" id="eventoValor">—</div>
+          </div>
+          <div>
+            <div class="k">Forma de pagamento</div>
+            <div class="v" id="eventoPagamento">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Dados da Festa</h3>
+        <div class="form-grid">
+          <label>
+            Tipo de festa
+            <select id="tipo_evento">
+              <option value="Infantil">Infantil</option>
+              <option value="Adulto">Adulto</option>
+              <option value="Casamento">Casamento</option>
+              <option value="Corporativo">Corporativo</option>
+              <option value="Domiciliar">Domiciliar</option>
+              <option value="Coquetel">Coquetel</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+
+          <label>
+            Data do evento
+            <input id="data_evento" type="date" />
+          </label>
+
+          <label>
+            Convidados
+            <input id="convidados" type="number" min="0" />
+          </label>
+
+          <label>
+            Valor total (R$)
+            <input id="valor_total" type="number" min="0" step="0.01" />
+          </label>
+
+          <label class="span-2">
+            Status
+            <select id="status">
+              <option value="orcamento">Orçamento</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="fechado">Fechado</option>
+              <option value="em_producao">Em produção</option>
+              <option value="realizado">Realizado</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </label>
+
+          <label class="span-2">
+            Forma de pagamento
+            <select id="forma_pagamento">
+              <option value="">—</option>
+              <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+              <option value="À vista (desconto)">À vista (desconto)</option>
+              <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="hint">
+          <strong>Próximo passo:</strong> vamos transformar as abas abaixo em módulos completos (dropdown fixo + “Outro” + fornecedor + custo).
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="tabs">
+        <button class="tab active" data-tab="equipe">Equipe</button>
+        <button class="tab" data-tab="bebidas">Bebidas</button>
+        <button class="tab" data-tab="doces">Doces</button>
+        <button class="tab" data-tab="salgados">Salgados</button>
+        <button class="tab" data-tab="decoracao">Decoração</button>
+        <button class="tab" data-tab="estrutura">Estrutura</button>
+        <button class="tab" data-tab="pagamento">Pagamento</button>
+      </div>
+
+      <div class="tab-panel" id="panel">
+        <div class="empty">
+          <div class="empty-title">Em construção (Fase 2.2)</div>
+          <div class="empty-text">Aqui vai virar uma lista completa por categoria usando a tabela <code>evento_itens</code>.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/js/festa.js"></script>
+</body>
+</html>
