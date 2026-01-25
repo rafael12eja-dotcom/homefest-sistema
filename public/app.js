@@ -219,3 +219,18 @@ function wireSearch() {
   // Keep the default view stable.
   setView("dashboard");
 })();
+
+
+// Build marker (helps verify deployed version)
+(async function loadBuildTag(){
+  try {
+    const el = document.getElementById('buildTag');
+    if (!el) return;
+    const res = await fetch('/api/version', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.build) {
+      el.textContent = `(${data.build})`;
+    }
+  } catch (_) {}
+})();

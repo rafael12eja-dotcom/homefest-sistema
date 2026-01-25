@@ -8,6 +8,8 @@ import { authAPI, requireAuth } from './routes/auth.js';
 import { usuariosAPI } from './routes/usuarios.js';
 import { propostasAPI } from './routes/propostas.js';
 
+const BUILD_ID = '20260125-021525'; // build marker (UTC), avoids env dependency
+
 function applySecurityHeaders(res) {
   const headers = new Headers(res.headers);
   headers.set('X-Content-Type-Options', 'nosniff');
@@ -40,6 +42,14 @@ export default {
     // Protect all /api/* except /api/login
     let authCtx = null;
     if (url.pathname.startsWith('/api/')) {
+      // API version endpoint
+      if (url.pathname === '/api/version') {
+        return applySecurityHeaders(new Response(JSON.stringify({ ok: true, build: BUILD_ID, ts: Date.now() }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        }));
+      }
+
       authCtx = await requireAuth(request, env);
       if (!authCtx.ok) return applySecurityHeaders(authCtx.res);
       // Inject auth context headers for downstream route handlers
@@ -85,7 +95,7 @@ export default {
     const redirectWithQuery = (path) => {
       const target = new URL(path, url.origin);
       // Preserve query string so routes like /app/festas?action=create keep working.
-      target.search = url.searchParams.toString();
+      target.search = url.search;
       return applySecurityHeaders(Response.redirect(target.toString(), 302));
     };
     // normalize trailing slash

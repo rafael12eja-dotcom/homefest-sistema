@@ -189,13 +189,23 @@ async function salvarFesta(){
 
   if(!res.ok){
     const txt = await res.text().catch(()=>'');
-    alert('Erro ao salvar festa. ' + txt);
+    toast('Erro ao salvar festa. ' + (txt || ''));
     return;
   }
+
+  const out = await res.json().catch(() => ({}));
 
   fecharModal();
   await carregarFestas();
   toast(editId ? 'Festa atualizada.' : 'Festa criada.');
+
+  // Redirect to event central on create for a coherent flow.
+  if (!editId) {
+    const newId = out?.id || out?.evento_id || out?.evento?.id;
+    if (newId) {
+      window.location.href = `/app/festa.html?id=${newId}`;
+    }
+  }
 }
 
 async function criarClienteRapido(){
