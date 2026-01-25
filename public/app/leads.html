@@ -6,63 +6,209 @@
   <title>Leads | Home Fest</title>
   <link rel="stylesheet" href="/css/layout.css">
   <link rel="stylesheet" href="/css/leads.css">
+  <script src="/shell.js" defer></script>
 </head>
-<body>
+<body class="layout">
 
-  <aside class="sidebar">
-    <h2>Home Fest</h2>
-    <a href="/app/dashboard.html">Dashboard</a>
-    <a href="/app/leads.html">Leads</a>
-    <a href="/app/clientes.html">Clientes</a>
-  <a href="/app/festas.html">Festas</a>
-    <a href="/app/festas.html">Festas</a>
-    <a href="/app/financeiro.html">Financeiro</a>
-  </aside>
-
-  <main class="main">
-    <h1>CRM - Leads</h1>
-
-    <div class="card">
-      <h3>Novo Lead</h3>
-      <div class="grid">
-        <input id="nome" placeholder="Nome">
-        <input id="telefone" placeholder="Telefone">
-        <input id="email" placeholder="Email">
-        <input id="cidade" placeholder="Cidade">
-        <input id="bairro" placeholder="Bairro">
-        <input id="origem" placeholder="Origem (WhatsApp, Instagram, Google...)">
-        <select id="status">
-          <option value="novo">Novo</option>
-          <option value="em_atendimento">Em atendimento</option>
-          <option value="orcamento_enviado">Orçamento enviado</option>
-          <option value="follow_up">Follow-up</option>
-          <option value="fechado">Fechado</option>
-          <option value="perdido">Perdido</option>
-        </select>
-        <textarea id="observacoes" placeholder="Observações"></textarea>
-      </div>
-      <div class="actions">
-        <button class="btn-primary" onclick="salvarLead()">Salvar Lead</button>
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
       </div>
     </div>
 
-    <div class="card">
-      <h3>Leads</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Telefone</th>
-              <th>Cidade</th>
-              <th>Status</th>
-              <th>Origem</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="lista"></tbody>
-        </table>
+    <nav class="nav">
+      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item is-active" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
       </div>
+      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
+    </div>
+  </aside>
+
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>CRM · Leads</h1>
+        <p class="muted">Organize o funil, registre histórico e converta em Cliente + Festa.</p>
+      </div>
+
+      <div class="page-actions">
+        <div class="search">
+          <span class="search-ico">🔎</span>
+          <input id="q" placeholder="Buscar por nome, telefone, origem..." autocomplete="off">
+        </div>
+        <button class="btn-ghost" id="btnToggleNovo">+ Novo lead</button>
+      </div>
+    </div>
+
+    <section class="card" id="novoLeadCard" hidden>
+      <div class="card-head">
+        <h3>Novo lead</h3>
+        <span class="pill">Captação</span>
+      </div>
+
+      <div class="form-grid">
+        <label>Nome
+          <input id="nome" placeholder="Nome completo">
+        </label>
+        <label>Telefone
+          <input id="telefone" placeholder="(31) 9....">
+        </label>
+        <label>Email
+          <input id="email" placeholder="email@exemplo.com">
+        </label>
+        <label>Cidade
+          <input id="cidade" placeholder="Belo Horizonte">
+        </label>
+        <label>Bairro
+          <input id="bairro" placeholder="Buritis">
+        </label>
+        <label>Origem
+          <input id="origem" placeholder="WhatsApp, Instagram, Google...">
+        </label>
+        <label>Status
+          <select id="status">
+            <option value="novo">Novo</option>
+            <option value="em_atendimento">Em atendimento</option>
+            <option value="orcamento_enviado">Orçamento enviado</option>
+            <option value="follow_up">Follow-up</option>
+            <option value="fechado">Fechado</option>
+            <option value="perdido">Perdido</option>
+          </select>
+        </label>
+        <label class="span-2">Observações
+          <textarea id="observacoes" placeholder="Resumo do pedido, data provável, preferências..."></textarea>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="btn-ghost" id="btnCancelarNovo">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarLead">Salvar lead</button>
+      </div>
+    </section>
+
+    <section class="kanban" aria-label="Pipeline de leads">
+      <div class="kanban-col" data-status="novo">
+        <div class="kanban-head">
+          <span class="k-title">Novo</span>
+          <span class="k-count" id="count_novo">0</span>
+        </div>
+        <div class="kanban-drop" data-drop="novo"></div>
+      </div>
+
+      <div class="kanban-col" data-status="em_atendimento">
+        <div class="kanban-head">
+          <span class="k-title">Em atendimento</span>
+          <span class="k-count" id="count_em_atendimento">0</span>
+        </div>
+        <div class="kanban-drop" data-drop="em_atendimento"></div>
+      </div>
+
+      <div class="kanban-col" data-status="orcamento_enviado">
+        <div class="kanban-head">
+          <span class="k-title">Orçamento enviado</span>
+          <span class="k-count" id="count_orcamento_enviado">0</span>
+        </div>
+        <div class="kanban-drop" data-drop="orcamento_enviado"></div>
+      </div>
+
+      <div class="kanban-col" data-status="follow_up">
+        <div class="kanban-head">
+          <span class="k-title">Follow-up</span>
+          <span class="k-count" id="count_follow_up">0</span>
+        </div>
+        <div class="kanban-drop" data-drop="follow_up"></div>
+      </div>
+
+      <div class="kanban-col" data-status="fechado">
+        <div class="kanban-head">
+          <span class="k-title">Fechado</span>
+          <span class="k-count" id="count_fechado">0</span>
+        </div>
+        <div class="kanban-drop" data-drop="fechado"></div>
+      </div>
+
+      <div class="kanban-col" data-status="perdido">
+        <div class="kanban-head">
+          <span class="k-title">Perdido</span>
+          <span class="k-count" id="count_perdido">0</span>
+        </div>
+        <div class="kanban-drop" data-drop="perdido"></div>
+      </div>
+    </section>
+
+    <!-- Lead details drawer -->
+    <div class="drawer hidden" id="drawer" aria-hidden="true">
+      <div class="drawer-panel">
+        <div class="drawer-head">
+          <div>
+            <div class="drawer-title" id="d_nome">Lead</div>
+            <div class="drawer-sub muted" id="d_sub"></div>
+          </div>
+          <button class="icon-btn" id="btnFecharDrawer" aria-label="Fechar">✕</button>
+        </div>
+
+        <div class="drawer-body">
+          <div class="drawer-grid">
+            <div class="info">
+              <div class="info-row"><span class="label">Telefone</span><span class="value" id="d_tel">—</span></div>
+              <div class="info-row"><span class="label">Email</span><span class="value" id="d_email">—</span></div>
+              <div class="info-row"><span class="label">Cidade/Bairro</span><span class="value" id="d_local">—</span></div>
+              <div class="info-row"><span class="label">Origem</span><span class="value" id="d_origem">—</span></div>
+            </div>
+
+            <div class="controls">
+              <label>Status
+                <select id="d_status">
+                  <option value="novo">Novo</option>
+                  <option value="em_atendimento">Em atendimento</option>
+                  <option value="orcamento_enviado">Orçamento enviado</option>
+                  <option value="follow_up">Follow-up</option>
+                  <option value="fechado">Fechado</option>
+                  <option value="perdido">Perdido</option>
+                </select>
+              </label>
+
+              <div class="quick">
+                <button class="btn-primary" id="btnConverter">Converter em Cliente + Festa</button>
+                <a class="btn-ghost" id="btnWhats" href="#" target="_blank" rel="noopener">WhatsApp</a>
+                <button class="btn-danger" id="btnExcluir">Excluir lead</button>
+              </div>
+
+              <div class="hint muted">Dica: você pode arrastar o card para mover de coluna.</div>
+            </div>
+          </div>
+
+          <div class="notes">
+            <div class="notes-head">
+              <h3>Histórico</h3>
+              <span class="pill">anotações</span>
+            </div>
+
+            <div class="note-new">
+              <textarea id="noteText" placeholder="Registrar contato, objeções, preferências..."></textarea>
+              <div class="note-actions">
+                <button class="btn-ghost" id="btnNoteClear">Limpar</button>
+                <button class="btn-primary" id="btnAddNote">Salvar nota</button>
+              </div>
+            </div>
+
+            <div class="note-list" id="notesList"></div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
     </div>
   </main>
 
@@ -70,7 +216,7 @@
   <div id="modal" class="modal hidden" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Fechar contrato</h3>
+        <h3>Converter em Cliente + Festa</h3>
         <button class="icon-btn" onclick="fecharModal()">✕</button>
       </div>
 
@@ -86,6 +232,15 @@
               <option value="Casamento">Casamento</option>
               <option value="Corporativo">Corporativo</option>
               <option value="Outro">Outro</option>
+            </select>
+          </label>
+
+          <label>
+            Status da festa
+            <select id="m_status_evento">
+              <option value="orcamento">Orçamento</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="fechado">Fechado</option>
             </select>
           </label>
 
@@ -128,7 +283,7 @@
 
       <div class="modal-footer">
         <button class="btn-ghost" onclick="fecharModal()">Cancelar</button>
-        <button class="btn-primary" onclick="confirmarFechamento()">Confirmar fechamento</button>
+        <button class="btn-primary" onclick="confirmarFechamento()">Converter</button>
       </div>
     </div>
   </div>

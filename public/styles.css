@@ -112,6 +112,15 @@ a{ color:inherit; }
   border-color: rgba(212,168,79,.22);
   color: var(--text);
 }
+.nav-item.is-disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.nav-item.is-disabled:hover{
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
 .nav-sep{
   height:1px; margin:10px 8px;
   background: var(--border);

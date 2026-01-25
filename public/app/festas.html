@@ -6,16 +6,34 @@
   <title>Festas | Home Fest</title>
   <link rel="stylesheet" href="/css/layout.css">
   <link rel="stylesheet" href="/css/festas.css">
+  <script src="/shell.js" defer></script>
 </head>
-<body>
-  <aside class="sidebar">
-    <h2>Home Fest</h2>
-    <a href="/app/dashboard.html">Dashboard</a>
-    <a href="/app/leads.html">Leads</a>
-    <a href="/app/clientes.html">Clientes</a>
-    <a class="active" href="/app/festas.html">Festas</a>
-    <a href="/app/financeiro.html">Financeiro</a>
+<body class="layout">
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
+    </div>
   </aside>
+
 
   <main class="main">
     <div class="topbar">
@@ -65,7 +83,7 @@
     <div class="modal" id="modalNova" hidden>
       <div class="modal-head">
         <div>
-          <h3>Nova Festa</h3>
+          <h3 id="modalTitle">Nova Festa</h3>
           <p class="muted">Selecione o cliente e preencha os dados básicos</p>
         </div>
         <button class="btn-ghost" id="btnFecharModal">✕</button>
@@ -77,6 +95,36 @@
             Cliente
             <select id="cliente_id"></select>
           </label>
+
+          <div class="span-2" style="display:flex;gap:10px;align-items:center;justify-content:flex-end;">
+            <button class="btn-ghost" id="btnQuickCliente" type="button" title="Criar cliente sem sair desta tela">+ Criar cliente rápido</button>
+          </div>
+
+          <div class="span-2" id="quickClienteBox" hidden>
+            <div class="card" style="padding:14px;border-radius:14px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div>
+                  <div style="font-weight:700;">Novo cliente</div>
+                  <div class="muted" style="font-size:12px;">Crie um cliente para vincular a esta festa.</div>
+                </div>
+                <button class="btn-ghost" id="btnCloseQuickCliente" type="button" aria-label="Fechar">✕</button>
+              </div>
+              <div class="form-grid" style="margin-top:10px;">
+                <label>
+                  Nome do cliente
+                  <input id="qc_nome" placeholder="Ex: Renata" />
+                </label>
+                <label>
+                  Telefone
+                  <input id="qc_telefone" placeholder="Ex: (31) 99999-9999" />
+                </label>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
+                <button class="btn-ghost" id="btnCancelQuickCliente" type="button">Cancelar</button>
+                <button class="btn-primary" id="btnSaveQuickCliente" type="button">Salvar cliente</button>
+              </div>
+            </div>
+          </div>
           <label>
             Tipo de festa
             <select id="tipo_evento">
@@ -113,6 +161,10 @@
               <option value="cancelado">Cancelado</option>
             </select>
           </label>
+          <label>
+            Contrato
+            <input type="text" id="contrato_numero" placeholder="(opcional) HF-AAAA-00000" />
+          </label>
           <label class="span-2">
             Forma de pagamento
             <select id="forma_pagamento">
@@ -128,7 +180,7 @@
 
       <div class="modal-foot">
         <button class="btn-ghost" id="btnCancelar">Cancelar</button>
-        <button class="btn-primary" id="btnSalvarNova">Criar festa</button>
+        <button class="btn-primary" id="btnSalvarNova">Salvar</button>
       </div>
     </div>
 

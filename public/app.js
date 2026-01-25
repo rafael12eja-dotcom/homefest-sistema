@@ -1,248 +1,221 @@
+/*
+  public/app.js
+  New Dark Dashboard controller.
+  Strategy (Option 1): make the dark dashboard a navigation hub that redirects to the existing legacy modules.
+  All clicks must either navigate, open a working modal, or be disabled with a tooltip.
+*/
+
 const views = {
   dashboard: { title: "Dashboard", hint: "Visão geral do dia e atalhos rápidos." },
-  clientes: { title: "Clientes", hint: "Cadastro, contatos, histórico e contratos." },
-  eventos: { title: "Festas", hint: "Do orçamento ao pós-evento." },
-  financeiro: { title: "Financeiro", hint: "Caixa, custos por festa e lucro." },
-  contratos: { title: "Contratos", hint: "Upload e vínculo com clientes/festas." },
-  patrimonio: { title: "Patrimônio", hint: "Inventário, manutenção e uso por festa." },
-  relatorios: { title: "Relatórios", hint: "Resultados por período e por canal." },
+  clientes: { title: "Clientes", hint: "Abrir módulo de clientes." },
+  eventos: { title: "Festas", hint: "Abrir módulo de festas." },
+  financeiro: { title: "Financeiro", hint: "Abrir módulo financeiro." },
+  usuarios: { title: "Usuários", hint: "Gerenciar usuários e permissões." },
+  leads: { title: "Leads", hint: "Abrir módulo de leads." },
+  contratos: { title: "Contratos", hint: "Em desenvolvimento." },
+  patrimonio: { title: "Patrimônio", hint: "Em desenvolvimento." },
+  relatorios: { title: "Relatórios", hint: "Em desenvolvimento." },
   config: { title: "Configurações", hint: "Marca, permissões e padrões." },
 };
 
-function setView(key){
+// Stable routes to legacy modules (production-ready today).
+const ROUTE_MAP = {
+  clientes: "/app/clientes.html",
+  eventos: "/app/festas.html",
+  financeiro: "/app/financeiro.html",
+  usuarios: "/app/usuarios.html",
+  leads: "/app/leads.html",
+};
+
+// Views that are not implemented as legacy modules yet.
+const DEV_VIEWS = new Set(["contratos", "patrimonio", "relatorios"]);
+
+function navigateTo(path) {
+  window.location.href = path;
+}
+
+function setView(key) {
   // buttons
-  document.querySelectorAll(".nav-item").forEach(btn => {
+  document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.view === key);
   });
   // sections
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("is-active"));
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("is-active"));
   const el = document.getElementById(`view-${key}`);
   if (el) el.classList.add("is-active");
 
   // header
   const meta = views[key] || { title: "Sistema", hint: "" };
-  document.getElementById("pageTitle").textContent = meta.title;
-  document.getElementById("pageHint").textContent = meta.hint;
+  const titleEl = document.getElementById("pageTitle");
+  const hintEl = document.getElementById("pageHint");
+  if (titleEl) titleEl.textContent = meta.title;
+  if (hintEl) hintEl.textContent = meta.hint;
 
   // close sidebar on mobile
   document.querySelector(".sidebar")?.classList.remove("is-open");
 }
 
-document.querySelectorAll(".nav-item").forEach(btn => {
-  btn.addEventListener("click", () => setView(btn.dataset.view));
-});
+function markAsDevDisabled(el, tooltip = "Em desenvolvimento") {
+  if (!el) return;
+  // Support both <button> and <a>
+  if (el.tagName === "BUTTON") {
+    el.disabled = true;
+  } else {
+    el.setAttribute("aria-disabled", "true");
+    el.addEventListener("click", (e) => e.preventDefault());
+  }
+  el.title = tooltip;
+  el.classList.add("is-disabled");
+}
 
-// Quick action
-document.querySelectorAll("[data-action='go-eventos']").forEach(btn => {
-  btn.addEventListener("click", () => setView("eventos"));
-});
+function wireSidebarNavigation() {
+  document.querySelectorAll(".nav-item").forEach((btn) => {
+    const key = btn.dataset.view;
+
+    // Dashboard stays inside the dark shell.
+    if (key === "dashboard") {
+      btn.addEventListener("click", () => setView("dashboard"));
+      return;
+    }
+
+    // Legacy modules: redirect.
+    if (ROUTE_MAP[key]) {
+      btn.addEventListener("click", () => navigateTo(ROUTE_MAP[key]));
+      return;
+    }
+
+    // Not implemented yet.
+    if (DEV_VIEWS.has(key)) {
+      markAsDevDisabled(btn, "Em desenvolvimento");
+      return;
+    }
+
+    // Config view is still inside the shell.
+    if (key === "config") {
+      btn.addEventListener("click", () => setView("config"));
+      return;
+    }
+
+    // Fallback: do nothing (but avoid dead click)
+    markAsDevDisabled(btn, "Em desenvolvimento");
+  });
+}
 
 // Mobile menu
-document.getElementById("btnMenu")?.addEventListener("click", () => {
-  document.querySelector(".sidebar")?.classList.toggle("is-open");
-});
+function wireMobileMenu() {
+  document.getElementById("btnMenu")?.addEventListener("click", () => {
+    document.querySelector(".sidebar")?.classList.toggle("is-open");
+  });
+}
 
 // Modal
 const modal = document.getElementById("modal");
-function openModal(title, hint, bodyHTML){
+const modalSaveBtn = document.getElementById("modalSave");
+
+function openModal(title, hint, bodyHTML, opts = {}) {
   document.getElementById("modalTitle").textContent = title;
   document.getElementById("modalHint").textContent = hint || "";
   document.getElementById("modalBody").innerHTML = bodyHTML || "";
+
+  // Save button behavior
+  if (modalSaveBtn) {
+    const showSave = opts.showSave !== false; // default true
+    modalSaveBtn.hidden = !showSave;
+    modalSaveBtn.textContent = opts.saveText || "Salvar";
+    modalSaveBtn.onclick = null;
+    if (typeof opts.onSave === "function") {
+      modalSaveBtn.onclick = opts.onSave;
+    }
+  }
+
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
 }
-function closeModal(){
+
+function closeModal() {
   modal.classList.remove("is-open");
   modal.setAttribute("aria-hidden", "true");
+  if (modalSaveBtn) {
+    modalSaveBtn.hidden = false;
+    modalSaveBtn.textContent = "Salvar";
+    modalSaveBtn.onclick = null;
+  }
 }
+
 modal?.addEventListener("click", (e) => {
   if (e.target?.dataset?.close) closeModal();
 });
+
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal();
+  if (e.key === "Escape" && modal?.classList.contains("is-open")) closeModal();
 });
 
-// Templates (somente UI — depois ligamos no banco D1)
-const templates = {
-  novoCliente: () => `
-    <div class="grid two">
-      <div class="field">
-        <label>Nome</label>
-        <input placeholder="Ex.: Renata" />
-      </div>
-      <div class="field">
-        <label>Telefone</label>
-        <input placeholder="+55 (31) ..." />
-      </div>
-      <div class="field">
-        <label>E-mail</label>
-        <input placeholder="email@..." />
-      </div>
-      <div class="field">
-        <label>Origem</label>
-        <select>
-          <option>WhatsApp</option>
-          <option>Instagram</option>
-          <option>Google</option>
-          <option>Indicação</option>
-        </select>
-      </div>
-    </div>
-  `,
-  novaFesta: () => `
-    <div class="grid two">
-      <div class="field">
-        <label>Cliente</label>
-        <input placeholder="Selecione/Busque" />
-      </div>
-      <div class="field">
-        <label>Data</label>
-        <input type="date" />
-      </div>
-      <div class="field">
-        <label>Tipo de festa</label>
-        <select>
-          <option>Infantil</option>
-          <option>Casamento</option>
-          <option>Corporativo</option>
-          <option>Domiciliar</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Convidados</label>
-        <input type="number" placeholder="Ex.: 70" />
-      </div>
-      <div class="field">
-        <label>Valor vendido</label>
-        <input placeholder="R$ 0,00" />
-      </div>
-      <div class="field">
-        <label>Status</label>
-        <select>
-          <option>Orçamento</option>
-          <option>Fechado</option>
-          <option>Produção</option>
-          <option>Evento</option>
-          <option>Pós</option>
-        </select>
-      </div>
-    </div>
-  `,
-  novaMov: () => `
-    <div class="grid two">
-      <div class="field">
-        <label>Tipo</label>
-        <select>
-          <option>Entrada</option>
-          <option>Saída</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Data</label>
-        <input type="date" />
-      </div>
-      <div class="field">
-        <label>Categoria</label>
-        <input placeholder="Ex.: Compras, Equipe, Bebidas..." />
-      </div>
-      <div class="field">
-        <label>Valor</label>
-        <input placeholder="R$ 0,00" />
-      </div>
-      <div class="field" style="grid-column:1 / -1">
-        <label>Descrição</label>
-        <input placeholder="Detalhes do lançamento" />
-      </div>
-    </div>
-  `,
-  uploadContrato: () => `
-    <div class="field">
-      <label>Vincular ao cliente</label>
-      <input placeholder="Buscar cliente..." />
-    </div>
-    <div class="field">
-      <label>Vincular à festa</label>
-      <input placeholder="Buscar festa..." />
-    </div>
-    <div class="field">
-      <label>Arquivo</label>
-      <input type="file" />
-      <div class="muted tiny" style="margin-top:6px">Depois vamos salvar no R2 (privado) e gerar link seguro.</div>
-    </div>
-  `,
-  novoItem: () => `
-    <div class="grid two">
-      <div class="field">
-        <label>Nome do item</label>
-        <input placeholder="Ex.: Mesa dobrável" />
-      </div>
-      <div class="field">
-        <label>Categoria</label>
-        <input placeholder="Ex.: Mesas" />
-      </div>
-      <div class="field">
-        <label>Quantidade</label>
-        <input type="number" placeholder="0" />
-      </div>
-      <div class="field">
-        <label>Status</label>
-        <select>
-          <option>Ok</option>
-          <option>Manutenção</option>
-          <option>Reposição</option>
-        </select>
-      </div>
-    </div>
-  `
-};
-
-document.querySelectorAll("[data-modal]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const key = btn.dataset.modal;
-    const titleMap = {
-      novoCliente: ["Novo cliente", "Cadastro rápido de cliente."],
-      novaFesta: ["Nova festa", "Crie o evento e evolua pelo pipeline."],
-      novaMov: ["Novo lançamento", "Entrada ou saída do caixa."],
-      uploadContrato: ["Enviar contrato", "Envie e vincule ao cliente/festa."],
-      novoItem: ["Novo item", "Adicionar item ao patrimônio."],
-    };
-    const [title, hint] = titleMap[key] || ["Novo", "Preencha os dados."];
-    openModal(title, hint, (templates[key] ? templates[key]() : ""));
+function wireDashboardActions() {
+  // Quick action: create a new party -> legacy festas (opens modal there)
+  document.querySelectorAll("[data-action='go-eventos']").forEach((btn) => {
+    btn.addEventListener("click", () => navigateTo("/app/festas.html?action=create"));
   });
-});
 
-document.getElementById("btnQuickAdd")?.addEventListener("click", () => {
-  openModal("Novo", "Escolha o que deseja criar.", `
-    <div class="grid two">
-      <button class="btn btn-primary w-full" data-quick="novoCliente">+ Cliente</button>
-      <button class="btn btn-primary w-full" data-quick="novaFesta">+ Festa</button>
-      <button class="btn btn-ghost w-full" data-quick="novaMov">+ Lançamento</button>
-      <button class="btn btn-ghost w-full" data-quick="uploadContrato">+ Contrato</button>
-    </div>
-  `);
-  document.querySelectorAll("[data-quick]").forEach(b => {
-    b.addEventListener("click", () => {
-      const key = b.dataset.quick;
-      const titleMap = {
-        novoCliente: ["Novo cliente", "Cadastro rápido de cliente."],
-        novaFesta: ["Nova festa", "Crie o evento e evolua pelo pipeline."],
-        novaMov: ["Novo lançamento", "Entrada ou saída do caixa."],
-        uploadContrato: ["Enviar contrato", "Envie e vincule ao cliente/festa."],
-      };
-      const [title, hint] = titleMap[key] || ["Novo", "Preencha os dados."];
-      openModal(title, hint, templates[key]());
+  // Disable demo-only buttons inside dashboard tables/panels
+  document.querySelectorAll(".panel-actions .btn").forEach((btn) => {
+    const txt = (btn.textContent || "").trim().toLowerCase();
+    if (txt === "filtrar" || txt === "exportar") {
+      markAsDevDisabled(btn, "Em desenvolvimento");
+    }
+  });
+
+  // Disable demo "Abrir" buttons in the sample table (no real IDs yet)
+  document
+    .querySelectorAll("#view-dashboard .table .btn.btn-ghost.btn-sm")
+    .forEach((btn) => markAsDevDisabled(btn, "Em desenvolvimento"));
+}
+
+function wireQuickAdd() {
+  document.getElementById("btnQuickAdd")?.addEventListener("click", () => {
+    openModal(
+      "Novo",
+      "Escolha o que deseja criar.",
+      `
+      <div class="grid two">
+        <button class="btn btn-primary w-full" data-go="/app/clientes.html">+ Cliente</button>
+        <button class="btn btn-primary w-full" data-go="/app/festas.html?action=create">+ Festa</button>
+        <button class="btn btn-ghost w-full" data-go="/app/financeiro.html">+ Lançamento</button>
+        <button class="btn btn-ghost w-full" data-dev="1" title="Em desenvolvimento" disabled>+ Contrato</button>
+      </div>
+      `,
+      { showSave: false }
+    );
+
+    document.querySelectorAll("[data-go]").forEach((b) => {
+      b.addEventListener("click", () => navigateTo(b.dataset.go));
     });
   });
-});
+}
 
 // Accent live (config)
-document.getElementById("applyAccent")?.addEventListener("click", () => {
-  const val = document.getElementById("accentInput").value?.trim() || "#d4a84f";
-  document.documentElement.style.setProperty("--accent", val);
-});
+function wireAccent() {
+  document.getElementById("applyAccent")?.addEventListener("click", () => {
+    const val = document.getElementById("accentInput").value?.trim() || "#d4a84f";
+    document.documentElement.style.setProperty("--accent", val);
+  });
+}
 
 // Basic global search (UI-only)
-document.getElementById("globalSearch")?.addEventListener("input", (e) => {
-  // placeholder: later we'll search in D1
-});
+function wireSearch() {
+  document.getElementById("globalSearch")?.addEventListener("input", () => {
+    // UI-only: later we'll search in D1.
+  });
+}
 
+// Initialize
+(function init() {
+  wireSidebarNavigation();
+  wireMobileMenu();
+  wireDashboardActions();
+  wireQuickAdd();
+  wireAccent();
+  wireSearch();
+
+  // Keep the default view stable.
+  setView("dashboard");
+})();

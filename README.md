@@ -25,33 +25,8 @@ Tecnologia:
   - `setx CLOUDFLARE_API_TOKEN "SEU_TOKEN_AQUI"` (Windows) ou `$env:CLOUDFLARE_API_TOKEN="SEU_TOKEN_AQUI"` (sessão atual)
   - `npx wrangler deploy`
 
-## Autenticação (obrigatório)
-
-O sistema usa cookie de sessão **assinado (HMAC)**.
-
-Configure os secrets no Worker (produção e/ou dev):
-
-1) Gere um segredo forte (32+ chars) e configure:
-- `SESSION_SECRET`
-
-2) Defina a senha do admin como SHA-256 hex e configure:
-- `ADMIN_PASS_SHA256`
-
-3) (Opcional) Ajuste o usuário admin em `wrangler.jsonc`:
-- `ADMIN_USER` (padrão: `admin`)
-
-### Comandos (Wrangler)
-
-```bash
-wrangler secret put SESSION_SECRET
-wrangler secret put ADMIN_PASS_SHA256
-```
-
-> Para gerar o SHA-256 da senha: use qualquer ferramenta local (ex.: `sha256sum`/PowerShell) e cole o hex.
-
 3) Links de teste:
-- Login: `/login.html`
-- Dashboard: `/app/dashboard.html`
+- Dashboard: `/`
 - Leads: `/app/leads.html`
 - Clientes: `/app/clientes.html`
 - Festas: `/app/festas.html`

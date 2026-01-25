@@ -5,16 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Financeiro | Home Fest</title>
   <link rel="stylesheet" href="/css/layout.css">
+  <script src="/shell.js" defer></script>
 </head>
-<body>
-  <aside class="sidebar">
-    <h2>Home Fest</h2>
-    <a href="/app/dashboard.html">Dashboard</a>
-    <a href="/app/leads.html">Leads</a>
-    <a href="/app/clientes.html">Clientes</a>
-    <a href="/app/festas.html">Festas</a>
-    <a class="active" href="/app/financeiro.html">Financeiro</a>
+<body class="layout">
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item is-active" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
+    </div>
   </aside>
+
 
   <main class="main">
     <h1>Financeiro</h1>

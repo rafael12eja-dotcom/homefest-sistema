@@ -6,17 +6,35 @@
   <title>Central da Festa | Home Fest</title>
   <link rel="stylesheet" href="/css/layout.css">
   <link rel="stylesheet" href="/css/festa.css">
+  <script src="/shell.js" defer></script>
 </head>
-<body>
+<body class="layout">
 
-  <aside class="sidebar">
-    <h2>Home Fest</h2>
-    <a href="/app/dashboard.html">Dashboard</a>
-    <a href="/app/leads.html">Leads</a>
-    <a href="/app/clientes.html">Clientes</a>
-    <a class="active" href="/app/festas.html">Festas</a>
-    <a href="/app/financeiro.html">Financeiro</a>
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
+    </div>
   </aside>
+
 
   <main class="main">
     <div class="topbar">
@@ -26,6 +44,7 @@
       </div>
       <div class="top-actions">
         <a class="btn-ghost" href="/app/festas.html">← Voltar</a>
+        <button class="btn-ghost" id="btnEditarEvento" title="Editar dados da festa">Editar festa</button>
         <button class="btn-primary" id="btnSalvar">Salvar</button>
       </div>
     </div>
@@ -136,89 +155,349 @@
         <button class="tab" data-tab="salgados">Salgados</button>
         <button class="tab" data-tab="decoracao">Decoração</button>
         <button class="tab" data-tab="estrutura">Estrutura</button>
+        <button class="tab" data-tab="proposta">Proposta</button>
         <button class="tab" data-tab="pagamento">Pagamento</button>
       </div>
 
+      
       <div class="tab-panel" id="panel">
 
-        <div id="panel-equipe" class="panel-inner">
-          <div class="tab-head">
+        <!-- EQUIPE -->
+        <div class="module" data-module="equipe">
+          <div class="module-head">
             <div>
-              <h3 style="margin:0">Equipe</h3>
-              <p class="muted" style="margin:6px 0 0">Cadastre funções e custos da equipe desta festa.</p>
+              <div class="module-title">Equipe</div>
+              <div class="module-sub">Cadastre a equipe por função/fornecedor e acompanhe o custo em tempo real.</div>
             </div>
-            <div class="tab-actions">
-              <div class="pill">Custo equipe: <strong id="equipeTotal">R$ 0,00</strong></div>
-              <button class="btn-primary" id="btnAddEquipe">+ Adicionar</button>
+            <div class="module-actions">
+              <div class="pill" title="Custo total da equipe nesta festa">
+                Total: <strong id="equipeTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnEquipeNovo">+ Adicionar</button>
             </div>
           </div>
 
-          <div id="equipeList" class="table-wrap"></div>
+          <div class="table-wrap">
+            <table class="table" id="equipeTable">
+              <thead>
+                <tr>
+                  <th>Função</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="equipeTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="hint">
+            Dica: use <strong>diária</strong> para equipe por turno, <strong>hora</strong> para extras, e <strong>evento</strong> para cachê fechado.
+          </div>
         </div>
 
-        <div id="panel-placeholder" class="panel-inner hidden">
+        <!-- PLACEHOLDERS -->
+        <div class="module" data-module="bebidas" hidden>
           <div class="empty">
-            <div class="empty-title">Em construção</div>
-            <div class="empty-text">Este módulo será conectado à tabela <code>evento_itens</code> em breve.</div>
+            <div class="empty-title">Bebidas (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          </div>
+        </div>
+        <div class="module" data-module="doces" hidden>
+          <div class="empty">
+            <div class="empty-title">Doces (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          </div>
+        </div>
+        <div class="module" data-module="salgados" hidden>
+          <div class="empty">
+            <div class="empty-title">Salgados (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          </div>
+        </div>
+        <div class="module" data-module="decoracao" hidden>
+          <div class="empty">
+            <div class="empty-title">Decoração (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          </div>
+        </div>
+        <div class="module" data-module="estrutura" hidden>
+          <div class="empty">
+            <div class="empty-title">Estrutura (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          </div>
+        </div>
+        <div class="module" data-module="proposta" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Proposta</div>
+              <div class="module-sub">Monte a proposta (itens + condições) e gere versões para o cliente.</div>
+            </div>
+            <div class="module-actions">
+              <button class="btn-ghost" id="btnPropAdicionar">+ Item</button>
+              <button class="btn-primary" id="btnPropSalvar">Salvar nova versão</button>
+              <a class="btn-ghost" id="btnPropImprimirUltima" href="#" target="_blank" rel="noopener">Imprimir última</a>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px;">
+            <div class="card pad">
+              <div class="form-grid">
+                <label>Título
+                  <input id="propTitulo" type="text" placeholder="Ex: Proposta Comercial • Home Fest"/>
+                </label>
+                <label>Validade
+                  <input id="propValidade" type="text" placeholder="Ex: 7 dias a partir do envio"/>
+                </label>
+              </div>
+              <label style="margin-top:10px;">Condições
+                <textarea id="propCondicoes" rows="4" placeholder="Ex: 50% agora e 50% até 7 dias antes do evento."></textarea>
+              </label>
+              <label style="margin-top:10px;">Observações
+                <textarea id="propObs" rows="4" placeholder="Ex: Cardápio personalizado conforme reunião."></textarea>
+              </label>
+            </div>
+
+            <div class="card pad">
+              <div class="kpi-row">
+                <div class="kpi">
+                  <div class="k">Subtotal</div>
+                  <div class="v" id="propSubtotal">R$ 0,00</div>
+                </div>
+                <div class="kpi">
+                  <div class="k">Desconto</div>
+                  <div class="v">
+                    <input id="propDesconto" type="number" min="0" step="0.01" value="0" style="width:140px;"/>
+                  </div>
+                </div>
+                <div class="kpi">
+                  <div class="k">Total</div>
+                  <div class="v" id="propTotal">R$ 0,00</div>
+                </div>
+              </div>
+
+              <div class="table-wrap" style="margin-top:12px;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th style="width:44px;">#</th>
+                      <th>Item / Descrição</th>
+                      <th style="width:90px; text-align:right;">Qtd</th>
+                      <th style="width:140px; text-align:right;">Unitário</th>
+                      <th style="width:44px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="propItens"></tbody>
+                </table>
+                <div class="empty-text" id="propEmpty">Adicione itens para compor a proposta.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card pad" style="margin-top:14px;">
+            <div class="module-title" style="font-size:16px;">Versões geradas</div>
+            <div class="module-sub" style="margin-top:4px;">Cada salvamento cria uma nova versão (v1, v2, v3...).</div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:80px;">Versão</th>
+                    <th>Título</th>
+                    <th style="width:160px;">Criada em</th>
+                    <th style="width:160px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="propVersoes"></tbody>
+              </table>
+              <div class="empty-text" id="propVersoesEmpty">Nenhuma proposta gerada ainda.</div>
+            </div>
+          </div>
+        </div>
+
+<div class="module" data-module="pagamento" hidden>
+          <div class="empty">
+            <div class="empty-title">Pagamento (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
           </div>
         </div>
 
       </div>
+
+      <!-- MODAL EQUIPE -->
+      <div class="modal" id="modalEquipe" hidden>
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalEquipeTitle">
+          <div class="modal-head">
+            <div>
+              <div class="modal-title" id="modalEquipeTitle">Adicionar equipe</div>
+              <div class="modal-sub">Preencha os campos abaixo. O total é calculado automaticamente.</div>
+            </div>
+            <button class="icon-btn" id="btnEquipeFechar" aria-label="Fechar">✕</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label>Função</label>
+              <select id="eqFuncao">
+                <option value="">Selecione…</option>
+                <option>Garçom</option>
+                <option>Copeira</option>
+                <option>Cozinheira</option>
+                <option>Auxiliar de cozinha</option>
+                <option>Recreador(a)</option>
+                <option>Monitor(a)</option>
+                <option>Segurança</option>
+                <option>Recepcionista</option>
+                <option>Fotógrafo</option>
+                <option>Filmagem</option>
+                <option>Outro</option>
+              </select>
+              <input id="eqFuncaoOutro" class="mt8" placeholder="Digite a função…" hidden />
+            </div>
+
+            <div class="field">
+              <label>Fornecedor</label>
+              <input id="eqFornecedor" placeholder="Ex: Equipe própria / Fulano / Empresa X" />
+            </div>
+
+            <div class="field">
+              <label>Quantidade</label>
+              <input id="eqQtd" type="number" min="0" step="1" value="1" />
+            </div>
+
+            <div class="field">
+              <label>Unidade</label>
+              <select id="eqUnidade">
+                <option value="pessoa">pessoa</option>
+                <option value="diaria">diária</option>
+                <option value="hora">hora</option>
+                <option value="evento">evento</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Valor unitário</label>
+              <input id="eqValorUnit" inputmode="decimal" placeholder="0,00" />
+            </div>
+
+            <div class="field">
+              <label>Valor total</label>
+              <input id="eqValorTotal" inputmode="decimal" placeholder="0,00" />
+              <div class="micro">Se deixar vazio, o sistema calcula: quantidade × unitário.</div>
+            </div>
+
+            <div class="field">
+              <label>Status</label>
+              <select id="eqStatus">
+                <option value="pendente">pendente</option>
+                <option value="confirmado">confirmado</option>
+                <option value="pago">pago</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Observação</label>
+              <input id="eqObs" placeholder="Ex: 17h–23h, uniforme, deslocamento..." />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-ghost" id="btnEquipeCancelar" data-close="1">Cancelar</button>
+            <button class="btn-primary" id="btnEquipeSalvar">Salvar</button>
+          </div>
+        </div>
+      </div>
+
     </section>
 
-    <!-- Modal Equipe -->
-    <div id="modalEquipe" class="modal hidden">
-      <div class="modal-card">
+    <!-- MODAL EDITAR FESTA -->
+    <div class="modal" id="modalEvento" hidden>
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalEventoTitle">
         <div class="modal-head">
-          <h3 id="modalEquipeTitle">Adicionar membro</h3>
-          <button class="btn-ghost" id="btnCloseEquipe">Fechar</button>
+          <div>
+            <div class="modal-title" id="modalEventoTitle">Editar Festa</div>
+            <div class="micro">Atualize os dados básicos do evento e do contrato.</div>
+          </div>
+          <button class="icon-btn" data-close="1" aria-label="Fechar">✕</button>
         </div>
 
-        <div class="grid">
-          <label>
-            Função
-            <select id="eqItem"></select>
-          </label>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Cliente</label>
+              <select id="evCliente"></select>
+            </div>
 
-          <label>
-            Fornecedor
-            <input id="eqFornecedor" placeholder="Equipe própria / Nome do fornecedor" />
-          </label>
+            <div class="field">
+              <label>Tipo</label>
+              <select id="evTipo">
+                <option value="Infantil">Infantil</option>
+                <option value="Adulto">Adulto</option>
+                <option value="Casamento">Casamento</option>
+                <option value="Corporativo">Corporativo</option>
+                <option value="Domiciliar">Domiciliar</option>
+                <option value="Coquetel">Coquetel</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
 
-          <label>
-            Quantidade
-            <input id="eqQtd" type="number" min="0" step="1" value="1" />
-          </label>
+            <div class="field">
+              <label>Data</label>
+              <input type="date" id="evData" />
+            </div>
 
-          <label>
-            Unidade
-            <select id="eqUnidade">
-              <option value="pessoa">pessoa</option>
-              <option value="diaria">diária</option>
-              <option value="hora">hora</option>
-              <option value="evento">evento</option>
-            </select>
-          </label>
+            <div class="field">
+              <label>Convidados</label>
+              <input type="number" id="evConvidados" min="0" />
+            </div>
 
-          <label>
-            Valor unitário (R$)
-            <input id="eqVU" inputmode="decimal" placeholder="0,00" />
-          </label>
+            <div class="field">
+              <label>Valor total (R$)</label>
+              <input id="evValorTotal" inputmode="decimal" placeholder="0,00" />
+            </div>
 
-          <label>
-            Total (R$)
-            <input id="eqVT" inputmode="decimal" placeholder="0,00" />
-          </label>
+            <div class="field">
+              <label>Status</label>
+              <select id="evStatus">
+                <option value="orcamento">Orçamento</option>
+                <option value="confirmado">Confirmado</option>
+                <option value="fechado">Fechado</option>
+                <option value="em_producao">Em produção</option>
+                <option value="realizado">Realizado</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
 
-          <label class="span-2">
-            Observação
-            <input id="eqObs" placeholder="Horário, uniforme, deslocamento, etc." />
-          </label>
+            <div class="field span-2">
+              <label>Forma de pagamento</label>
+              <select id="evForma">
+                <option value="">—</option>
+                <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+                <option value="À vista (desconto)">À vista (desconto)</option>
+                <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Contrato</label>
+              <input id="evContrato" placeholder="HF-AAAA-00000" />
+            </div>
+          </div>
         </div>
 
         <div class="modal-actions">
-          <button class="btn-ghost" id="btnCancelEquipe">Cancelar</button>
-          <button class="btn-primary" id="btnSaveEquipe">Salvar</button>
+          <button class="btn-ghost" data-close="1">Cancelar</button>
+          <button class="btn-primary" id="btnEventoSalvar">Salvar alterações</button>
         </div>
       </div>
     </div>

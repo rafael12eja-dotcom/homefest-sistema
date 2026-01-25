@@ -11,8 +11,8 @@ form.addEventListener("submit", async (e) => {
   setMsg("Entrando...");
   const fd = new FormData(form);
   const payload = {
-    user: fd.get("user"),
-    pass: fd.get("pass"),
+    email: fd.get("email"),
+    senha: fd.get("pass"),
   };
 
   try{

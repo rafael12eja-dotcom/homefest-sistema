@@ -62,11 +62,50 @@ function getCookie(req, name) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-function setCookieHeader({ name, value, maxAgeSeconds, path = '/', httpOnly = true, sameSite = 'Lax', secure = true }) {
-  const parts = [`${name}=${encodeURIComponent(value)}`, `Path=${path}`, `Max-Age=${maxAgeSeconds}`, `SameSite=${sameSite}`];
+function setCookieHeader({ 
+  name, 
+  value, 
+  maxAgeSeconds, 
+  path = '/', 
+  httpOnly = true, 
+  sameSite = 'Lax', 
+  secure = true,
+  domain = null,
+} = {}) {
+  const parts = [`${name}=${encodeURIComponent(value ?? '')}`, `Path=${path}`, `Max-Age=${maxAgeSeconds}`, `SameSite=${sameSite}`];
   if (httpOnly) parts.push('HttpOnly');
   if (secure) parts.push('Secure');
+  if (domain) parts.push(`Domain=${domain}`);
   return parts.join('; ');
+}
+
+function cookiePolicyFromUrl(url) {
+  const host = url.hostname || '';
+  const isHttps = url.protocol === 'https:';
+  const isProdDomain = host === 'sistema.homefesteeventos.com.br' || host.endsWith('.homefesteeventos.com.br');
+  return {
+    secure: isHttps,
+    // Domain only for production domain(s). Never set Domain for localhost/workers.dev.
+    domain: isProdDomain ? '.homefesteeventos.com.br' : null,
+    sameSite: 'Lax',
+    path: '/',
+  };
+}
+
+function isAllowedOrigin(request, url) {
+  // Basic CSRF protection for login/logout: allow same-origin and known dev origins.
+  const origin = request.headers.get('Origin') || '';
+  const referer = request.headers.get('Referer') || '';
+  if (!origin && !referer) return true; // non-browser clients
+  const allowed = new Set([
+    url.origin,
+    'http://localhost:8787',
+    'http://127.0.0.1:8787',
+  ]);
+  for (const a of allowed) {
+    if (origin.startsWith(a) || referer.startsWith(a)) return true;
+  }
+  return false;
 }
 
 function parseSessionPayload(payloadJson) {
@@ -122,6 +161,7 @@ export async function requireAuth(request, env, opts = { redirectOnFail: true })
   // Pass auth context downstream using headers (simple & works with existing route signatures)
   const headers = new Headers(request.headers);
   headers.set('x-user', verified.payload.user || '');
+  headers.set('x-user-id', String(verified.payload.user_id || 0));
   headers.set('x-perfil', verified.payload.perfil || 'admin');
   headers.set('x-empresa-id', String(verified.payload.empresa_id || 1));
   return { ok: true, headers };
@@ -135,12 +175,23 @@ export async function authAPI(request, env) {
     const token = getCookie(request, 'hf_session');
     const verified = await verifySessionCookie(env, token);
     if (!verified.ok) return json({ ok: false }, 401);
-    const { user, perfil, empresa_id, exp } = verified.payload;
-    return json({ ok: true, user, perfil, empresa_id, exp });
+    const payload = verified.payload || {};
+    return json({
+      ok: true,
+      user_id: payload.user_id ?? 0,
+      email: payload.email ?? '',
+      nome: payload.nome ?? '',
+      perfil: payload.perfil ?? 'admin',
+      empresa_id: payload.empresa_id ?? 1,
+      exp: payload.exp ?? null,
+      iat: payload.iat ?? null,
+    });
   }
 
   if (path === '/api/logout') {
-    const cookie = setCookieHeader({ name: 'hf_session', value: '', maxAgeSeconds: 0 });
+    if (!isAllowedOrigin(request, url)) return json({ message: 'Origem não permitida.' }, 403);
+    const policy = cookiePolicyFromUrl(url);
+    const cookie = setCookieHeader({ name: 'hf_session', value: '', maxAgeSeconds: 0, secure: policy.secure, sameSite: policy.sameSite, path: policy.path, domain: policy.domain });
     if (path.startsWith('/api/')) return json({ ok: true }, 200, { 'Set-Cookie': cookie });
     return Response.redirect(new URL('/login.html', url.origin).toString(), 302, { headers: { 'Set-Cookie': cookie } });
   }
@@ -151,11 +202,59 @@ export async function authAPI(request, env) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const user = String(body.user || '').trim();
-    const pass = String(body.pass || '');
+    const emailOrUser = String(body.email || body.user || '').trim().toLowerCase();
+    const pass = String(body.senha || body.pass || '');
 
-    // Admin bootstrap via env vars
-    const adminUser = String(env.ADMIN_USER || 'admin');
+    if (!emailOrUser || !pass) {
+      return json({ message: 'Informe email e senha.' }, 400);
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+
+    // 1) Prefer DB users (email+senha)
+    if (env.DB) {
+      try {
+        // Ensure tables exist (migration should have created them)
+        const row = await env.DB.prepare(
+          "SELECT id, empresa_id, nome, email, senha_hash, salt, perfil, ativo FROM usuarios WHERE lower(email)=? LIMIT 1"
+        ).bind(emailOrUser).first();
+
+        if (row && Number(row.ativo) === 1) {
+          const salt = row.salt ? String(row.salt) : '';
+          // New users: senha_hash = sha256(salt:senha). Legacy: senha_hash may be plain sha256(senha)
+          const candidate = salt ? await sha256Hex(`${salt}:${pass}`) : await sha256Hex(pass);
+
+          if (candidate === String(row.senha_hash)) {
+            const payload = {
+              user_id: row.id,
+              email: row.email,
+              nome: row.nome,
+              perfil: row.perfil || 'vendas',
+              empresa_id: row.empresa_id || 1,
+              iat: now,
+              exp: now + 60 * 60 * 12, // 12h
+            };
+
+            const token = await makeSessionCookie(env, payload);
+            const policy = cookiePolicyFromUrl(url);
+            const cookie = setCookieHeader({ name: 'hf_session', value: token, maxAgeSeconds: 60 * 60 * 12, secure: policy.secure, sameSite: policy.sameSite, path: policy.path, domain: policy.domain });
+            return json({ ok: true, redirect: '/' }, 200, { 'Set-Cookie': cookie });
+          }
+
+          return json({ message: 'Email ou senha inválidos.' }, 401);
+        }
+
+        if (row && Number(row.ativo) !== 1) {
+          return json({ message: 'Usuário inativo.' }, 403);
+        }
+        // if not found, fall through to admin bootstrap
+      } catch (e) {
+        // ignore DB errors and fall back to admin bootstrap
+      }
+    }
+
+    // 2) Admin bootstrap via env vars (fallback / first access)
+    const adminUser = String(env.ADMIN_USER || 'admin').toLowerCase();
     const adminPassSha = String(env.ADMIN_PASS_SHA256 || '');
 
     if (!adminPassSha) {
@@ -165,13 +264,44 @@ export async function authAPI(request, env) {
     }
 
     const passSha = await sha256Hex(pass);
-    if (user !== adminUser || passSha !== adminPassSha) {
-      return json({ message: 'Usuário ou senha inválidos.' }, 401);
+    const userTyped = emailOrUser;
+
+    // Accept "admin" or "admin@..." for bootstrap
+    const isAdminUser = (userTyped === adminUser) || (userTyped === `${adminUser}@homefest.local`);
+
+    if (!isAdminUser || passSha !== adminPassSha) {
+      return json({ message: 'Email ou senha inválidos.' }, 401);
     }
 
-    const now = Math.floor(Date.now() / 1000);
+    // If DB is available, auto-provision empresa/user on first bootstrap
+    if (env.DB) {
+      try {
+        // Ensure empresa id=1 exists
+        await env.DB.prepare(
+          "INSERT INTO empresa (id, nome) SELECT 1, 'Home Fest & Eventos' WHERE NOT EXISTS (SELECT 1 FROM empresa WHERE id=1)"
+        ).run();
+
+        const adminEmail = userTyped.includes('@') ? userTyped : `${adminUser}@homefest.local`;
+
+        // Create admin user if missing
+        const exists = await env.DB.prepare(
+          "SELECT id FROM usuarios WHERE lower(email)=? LIMIT 1"
+        ).bind(adminEmail.toLowerCase()).first();
+
+        if (!exists) {
+          await env.DB.prepare(
+            "INSERT INTO usuarios (empresa_id, nome, email, senha_hash, salt, perfil, ativo) VALUES (1, ?, ?, ?, NULL, 'admin', 1)"
+          ).bind('Administrador', adminEmail.toLowerCase(), adminPassSha).run();
+        }
+      } catch (e) {
+        // ignore bootstrap errors
+      }
+    }
+
     const payload = {
-      user,
+      user_id: 0,
+      email: isAdminUser ? (userTyped.includes('@') ? userTyped : `${adminUser}@homefest.local`) : userTyped,
+      nome: 'Administrador',
       perfil: 'admin',
       empresa_id: 1,
       iat: now,
@@ -179,8 +309,9 @@ export async function authAPI(request, env) {
     };
 
     const token = await makeSessionCookie(env, payload);
-    const cookie = setCookieHeader({ name: 'hf_session', value: token, maxAgeSeconds: 60 * 60 * 12 });
-    return json({ ok: true, redirect: '/app/dashboard.html' }, 200, { 'Set-Cookie': cookie });
+    const policy = cookiePolicyFromUrl(url);
+            const cookie = setCookieHeader({ name: 'hf_session', value: token, maxAgeSeconds: 60 * 60 * 12, secure: policy.secure, sameSite: policy.sameSite, path: policy.path, domain: policy.domain });
+    return json({ ok: true, redirect: '/' }, 200, { 'Set-Cookie': cookie });
   }
 
   return text(404, 'Not Found');

@@ -6,24 +6,105 @@
   <title>Clientes | Home Fest</title>
   <link rel="stylesheet" href="/css/layout.css">
   <link rel="stylesheet" href="/css/clientes.css">
+  <script src="/shell.js" defer></script>
 </head>
-<body>
+<body class="layout">
 
-  <aside class="sidebar">
-    <h2>Home Fest</h2>
-    <a href="/app/dashboard.html">Dashboard</a>
-    <a href="/app/leads.html">Leads</a>
-    <a href="/app/clientes.html">Clientes</a>
-  <a href="/app/festas.html">Festas</a>
-    <a href="/app/festas.html">Festas</a>
-    <a href="/app/financeiro.html">Financeiro</a>
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item is-active" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
+    </div>
   </aside>
 
+
   <main class="main">
-    <h1>Clientes</h1>
+    <div class="page-head">
+      <div>
+        <h1>CRM · Clientes</h1>
+        <p class="muted">Cadastro completo, eventos vinculados e atalhos de criação.</p>
+      </div>
+
+      <div class="page-actions">
+        <div class="search">
+          <span class="search-ico">🔎</span>
+          <input id="q" placeholder="Buscar por nome, telefone, bairro..." autocomplete="off">
+        </div>
+        <button class="btn-ghost" id="btnNovo">+ Novo cliente</button>
+      </div>
+    </div>
+
+    <section class="card" id="novoCard" hidden>
+      <div class="card-head">
+        <h3>Novo cliente</h3>
+        <span class="pill">cadastro</span>
+      </div>
+
+      <div class="form-grid">
+        <label class="span-2">Nome
+          <input id="c_nome" placeholder="Nome completo" />
+        </label>
+        <label>Telefone
+          <input id="c_telefone" placeholder="(31) 9...." />
+        </label>
+        <label>Email
+          <input id="c_email" placeholder="email@exemplo.com" />
+        </label>
+        <label>Cidade
+          <input id="c_cidade" placeholder="Belo Horizonte" />
+        </label>
+        <label>Bairro
+          <input id="c_bairro" placeholder="Buritis" />
+        </label>
+        <label>CEP
+          <input id="c_cep" placeholder="00000-000" />
+        </label>
+        <label class="span-2">Endereço
+          <input id="c_endereco" placeholder="Rua / Av" />
+        </label>
+        <label>Número
+          <input id="c_numero" placeholder="123" />
+        </label>
+        <label>Complemento
+          <input id="c_complemento" placeholder="Apto / Bloco" />
+        </label>
+        <label>Estado
+          <input id="c_estado" placeholder="MG" />
+        </label>
+        <label class="span-2">Observações
+          <textarea id="c_observacoes" placeholder="Preferências, restrições, informações importantes..."></textarea>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="btn-ghost" id="btnCancelarNovo">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarNovo">Salvar cliente</button>
+      </div>
+    </section>
 
     <div class="card">
-      <h3>Lista de clientes</h3>
+      <div class="card-head">
+        <h3>Lista de clientes</h3>
+        <span class="pill" id="count">0</span>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -32,6 +113,7 @@
               <th>Telefone</th>
               <th>Cidade</th>
               <th>Bairro</th>
+              <th>Festas</th>
               <th>Último evento</th>
               <th>Ações</th>
             </tr>
@@ -41,9 +123,109 @@
       </div>
     </div>
 
-    <div class="card" id="detalheCard" style="display:none;">
-      <h3>Detalhes do cliente</h3>
-      <div id="detalhe"></div>
+    <!-- Cliente drawer -->
+    <div class="drawer hidden" id="drawer" aria-hidden="true">
+      <div class="drawer-panel">
+        <div class="drawer-head">
+          <div>
+            <div class="drawer-title" id="d_nome">Cliente</div>
+            <div class="drawer-sub muted" id="d_sub">—</div>
+          </div>
+          <button class="icon-btn" id="btnFecharDrawer" aria-label="Fechar">✕</button>
+        </div>
+
+        <div class="drawer-body">
+          <div class="drawer-grid">
+            <div class="info">
+              <div class="info-row"><span class="label">Telefone</span><span class="value" id="d_tel">—</span></div>
+              <div class="info-row"><span class="label">Email</span><span class="value" id="d_email">—</span></div>
+              <div class="info-row"><span class="label">Cidade/Bairro</span><span class="value" id="d_local">—</span></div>
+              <div class="info-row"><span class="label">Endereço</span><span class="value" id="d_end">—</span></div>
+            </div>
+
+            <div class="controls">
+              <div class="quick">
+                <a class="btn-primary" id="btnCriarFesta" href="#">Criar festa</a>
+                <button class="btn-ghost" id="btnEditar">Editar cadastro</button>
+                <button class="btn-ghost" id="btnFecharEditar" hidden>Fechar edição</button>
+                <button class="btn-danger" id="btnExcluir" disabled title="Em desenvolvimento">Excluir cliente</button>
+              </div>
+              <div class="hint muted">Dica: crie uma festa já vinculada ao cliente com 1 clique.</div>
+            </div>
+          </div>
+
+          <div class="card mini" id="editCard" hidden>
+            <div class="card-head">
+              <h3>Editar cadastro</h3>
+              <span class="pill">dados</span>
+            </div>
+
+            <div class="form-grid">
+              <label class="span-2">Nome
+                <input id="e_nome" />
+              </label>
+              <label>Telefone
+                <input id="e_telefone" />
+              </label>
+              <label>Email
+                <input id="e_email" />
+              </label>
+              <label>Cidade
+                <input id="e_cidade" />
+              </label>
+              <label>Bairro
+                <input id="e_bairro" />
+              </label>
+              <label>CEP
+                <input id="e_cep" />
+              </label>
+              <label class="span-2">Endereço
+                <input id="e_endereco" />
+              </label>
+              <label>Número
+                <input id="e_numero" />
+              </label>
+              <label>Complemento
+                <input id="e_complemento" />
+              </label>
+              <label>Estado
+                <input id="e_estado" />
+              </label>
+              <label class="span-2">Observações
+                <textarea id="e_observacoes"></textarea>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="btn-ghost" id="btnCancelarEdicao">Cancelar</button>
+              <button class="btn-primary" id="btnSalvarEdicao">Salvar alterações</button>
+            </div>
+          </div>
+
+          <div class="card mini">
+            <div class="card-head">
+              <h3>Festas do cliente</h3>
+              <span class="pill" id="d_eventos_count">0</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th>Valor</th>
+                    <th>Contrato</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="d_eventos"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
     </div>
   </main>
 

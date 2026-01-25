@@ -5,7 +5,23 @@ import { eventoItensAPI } from './routes/evento_itens.js';
 import { financeiroAPI } from './routes/financeiro.js';
 import { dashboardAPI } from './routes/dashboard.js';
 import { authAPI, requireAuth } from './routes/auth.js';
-import { equipeHandler, equipeItemHandler } from './routes/equipe.js';
+import { usuariosAPI } from './routes/usuarios.js';
+import { propostasAPI } from './routes/propostas.js';
+
+function applySecurityHeaders(res) {
+  const headers = new Headers(res.headers);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+  const ct = headers.get('content-type') || '';
+  // Avoid caching for HTML and API responses to prevent "ghost" UI/data.
+  if (ct.includes('text/html') || ct.includes('application/json')) {
+    headers.set('Cache-Control', 'no-store');
+  }
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
 
 export default {
   async fetch(request, env) {
@@ -13,20 +29,21 @@ export default {
 
     // Auth endpoints (public)
     if (url.pathname.startsWith('/api/login') || url.pathname.startsWith('/api/logout') || url.pathname.startsWith('/api/me')) {
-      return authAPI(request, env);
+      return applySecurityHeaders(await authAPI(request, env));
     }
 
     // Logout shortcut for UI
     if (url.pathname === '/logout') {
-      return authAPI(new Request(new URL('/api/logout', url.origin).toString(), request), env);
+      return applySecurityHeaders(await authAPI(new Request(new URL('/api/logout', url.origin).toString(), request), env));
     }
 
     // Protect all /api/* except /api/login
+    let authCtx = null;
     if (url.pathname.startsWith('/api/')) {
-      const auth = await requireAuth(request, env);
-      if (!auth.ok) return auth.res;
-      // attach auth context via request headers (cheap) - or pass along in env object
-      request = new Request(request, { headers: auth.headers });
+      authCtx = await requireAuth(request, env);
+      if (!authCtx.ok) return applySecurityHeaders(authCtx.res);
+      // Inject auth context headers for downstream route handlers
+      request = new Request(request, { headers: authCtx.headers });
     }
 
     // Protect app pages (SPA) except login assets
@@ -42,32 +59,56 @@ export default {
       // Only gate HTML pages and app assets (optional hardening)
       if (url.pathname.startsWith('/app/') || url.pathname.endsWith('.html')) {
         const auth = await requireAuth(request, env);
-        if (!auth.ok) return auth.res;
+        if (!auth.ok) return applySecurityHeaders(auth.res);
       }
     }
 
     // Root: redirect to dashboard if logged in, else to login
     if (url.pathname === '/') {
       const auth = await requireAuth(request, env, { redirectOnFail: false });
-      if (!auth.ok) return Response.redirect(new URL('/login.html', url.origin).toString(), 302);
-      return Response.redirect(new URL('/app/dashboard.html', url.origin).toString(), 302);
+      if (!auth.ok) return applySecurityHeaders(Response.redirect(new URL('/login.html', url.origin).toString(), 302));
+      return applySecurityHeaders(Response.redirect(new URL('/index.html', url.origin).toString(), 302));
+    }
+    // Pretty URLs (no .html) -> real .html pages (prevents broken buttons/menus)
+    const prettyMap = {
+      '/login': '/login.html',
+      '/app': '/index.html',
+      '/app/dashboard': '/index.html',
+      '/app/dashboard.html': '/index.html',
+      '/app/leads': '/app/leads.html',
+      '/app/clientes': '/app/clientes.html',
+      '/app/festas': '/app/festas.html',
+      '/app/festa': '/app/festa.html',
+      '/app/financeiro': '/app/financeiro.html',
+      '/app/usuarios': '/app/usuarios.html',
+    };
+    const redirectWithQuery = (path) => {
+      const target = new URL(path, url.origin);
+      // Preserve query string so routes like /app/festas?action=create keep working.
+      target.search = url.searchParams.toString();
+      return applySecurityHeaders(Response.redirect(target.toString(), 302));
+    };
+    // normalize trailing slash
+    if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
+      const p = url.pathname.slice(0, -1);
+      if (prettyMap[p]) return redirectWithQuery(prettyMap[p]);
+      // if removing slash matches an asset, let it continue
+    } else if (prettyMap[url.pathname]) {
+      return redirectWithQuery(prettyMap[url.pathname]);
     }
 
-    if (url.pathname.startsWith('/api/leads')) return leadsAPI(request, env);
-    if (url.pathname.startsWith('/api/clientes')) return clientesAPI(request, env);
-    if (url.pathname.startsWith('/api/eventos-itens')) return eventoItensAPI(request, env);
 
-    // Equipe (Central da Festa)
-    const mEquipe = url.pathname.match(/^\/api\/eventos\/(\d+)\/equipe\/?$/);
-    if (mEquipe) return equipeHandler(request, env, null, { eventoId: mEquipe[1] });
 
-    const mEquipeItem = url.pathname.match(/^\/api\/eventos\/(\d+)\/equipe\/(\d+)\/?$/);
-    if (mEquipeItem) return equipeItemHandler(request, env, null, { eventoId: mEquipeItem[1], itemId: mEquipeItem[2] });
+    if (url.pathname.startsWith('/api/usuarios')) return applySecurityHeaders(await usuariosAPI(request, env, authCtx));
+    if (url.pathname.startsWith('/api/leads')) return applySecurityHeaders(await leadsAPI(request, env));
+    if (url.pathname.startsWith('/api/clientes')) return applySecurityHeaders(await clientesAPI(request, env));
+    if (url.pathname.startsWith('/api/eventos-itens')) return applySecurityHeaders(await eventoItensAPI(request, env));
+    if (url.pathname.startsWith('/api/eventos')) return applySecurityHeaders(await eventosAPI(request, env));
+    if (url.pathname.startsWith('/api/financeiro')) return applySecurityHeaders(await financeiroAPI(request, env));
+    if (url.pathname.startsWith('/api/dashboard')) return applySecurityHeaders(await dashboardAPI(request, env));
+    if (url.pathname.startsWith('/api/propostas')) return applySecurityHeaders(await propostasAPI(request, env));
 
-    if (url.pathname.startsWith('/api/eventos')) return eventosAPI(request, env);
-    if (url.pathname.startsWith('/api/financeiro')) return financeiroAPI(request, env);
-    if (url.pathname.startsWith('/api/dashboard')) return dashboardAPI(request, env);
-
-    return env.ASSETS.fetch(request);
+    const assetRes = await env.ASSETS.fetch(request);
+    return applySecurityHeaders(assetRes);
   }
 };

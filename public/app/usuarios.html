@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Usuários | Home Fest</title>
+<link rel="stylesheet" href="/css/layout.css">
+<style>
+  .toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .btn{background:#b08d57;color:#111;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+  .btn.secondary{background:#222;color:#fff;border:1px solid #333}
+  .table{width:100%;border-collapse:collapse;background:#111;border:1px solid #222;border-radius:12px;overflow:hidden}
+  .table th,.table td{padding:10px;border-bottom:1px solid #222;text-align:left}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid #333;font-size:12px}
+  .badge.on{background:#0f1f14;border-color:#1f3b27;color:#a7f3c6}
+  .badge.off{background:#241010;border-color:#3b1f1f;color:#fca5a5}
+  dialog{border:1px solid #333;border-radius:14px;background:#0b0b0b;color:#fff;max-width:520px;width:92vw}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#bbb}
+  .form-grid input,.form-grid select{padding:10px;border-radius:10px;border:1px solid #2a2a2a;background:#111;color:#fff}
+  .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+  .muted{color:#aaa;font-size:12px}
+</style>
+  <script src="/shell.js" defer></script>
+</head>
+<body class="layout layout"
+
+
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item is-active" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
+    </div>
+  </aside>
+
+
+<div class="main">
+  <h1>Usuários</h1>
+
+  <div class="toolbar">
+    <div class="muted">Crie logins por email + senha e defina o perfil de acesso.</div>
+    <button class="btn" id="btnNovo">+ Novo usuário</button>
+  </div>
+
+  <div id="msg" class="muted"></div>
+
+  <table class="table" id="tbl">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Email</th>
+        <th>Perfil</th>
+        <th>Status</th>
+        <th style="width:220px">Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="frm">
+    <h3 style="margin:0 0 8px 0">Novo usuário</h3>
+    <div class="form-grid">
+      <label>Nome
+        <input name="nome" required />
+      </label>
+      <label>Perfil
+        <select name="perfil">
+          <option value="vendas">Vendas</option>
+          <option value="financeiro">Financeiro</option>
+          <option value="operacional">Operacional</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
+      <label style="grid-column:1 / -1">Email
+        <input name="email" type="email" required />
+      </label>
+      <label style="grid-column:1 / -1">Senha
+        <input name="senha" type="password" required />
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" value="cancel">Cancelar</button>
+      <button class="btn" id="btnSalvar" value="default">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgReset">
+  <form method="dialog" id="frmReset">
+    <h3 style="margin:0 0 8px 0">Redefinir senha</h3>
+    <div class="form-grid">
+      <label style="grid-column:1 / -1">Nova senha
+        <input name="senha" type="password" required />
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" value="cancel">Cancelar</button>
+      <button class="btn" id="btnResetOk" value="default">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/js/usuarios.js"></script>
+</body>
+</html>
