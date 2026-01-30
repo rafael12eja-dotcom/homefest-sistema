@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Entrar • Sistema Home Fest</title>
   <link rel="stylesheet" href="/auth.css" />
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="/favicon.png">
 </head>
 <body>
   <main class="auth">
     <section class="card" role="region" aria-label="Login">
       <header class="brand">
-        <div class="mark" aria-hidden="true">HF</div>
+        <div class="mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
         <div>
           <div class="name">Home Fest & Eventos</div>
           <div class="sub">Acesso ao Sistema</div>
@@ -44,5 +44,20 @@
   </main>
 
   <script src="/auth.js"></script>
+
+<script>
+  // hfAutoRedirectIfLoggedIn: if user is already authenticated, avoid showing login screen.
+  (async () => {
+    try {
+      const res = await fetch("/api/me", { credentials: "include", cache: "no-store" });
+      if (res.ok) {
+        const url = new URL(window.location.href);
+        const next = url.searchParams.get("next");
+        window.location.replace(next || "/");
+      }
+    } catch {}
+  })();
+</script>
+
 </body>
 </html>

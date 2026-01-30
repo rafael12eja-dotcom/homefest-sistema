@@ -1,3 +1,13 @@
+async function __hfInit_festa(ctx){
+  function hfApplyPermissions(){ try { if (window.applyPermissionsToDOM) window.applyPermissionsToDOM(document); } catch {} }
+  try {
+    if (window.hfPermsReady) await window.hfPermsReady;
+    if (window.hfCanRead && !window.hfCanRead('eventos')) {
+      window.hfRenderNoPermission && window.hfRenderNoPermission({ modulo: 'eventos', title: 'Sem permissão', container: document.querySelector('main') });
+      return;
+    }
+  } catch {}
+
 function qs(name){
   const u = new URL(window.location.href);
   return u.searchParams.get(name);
@@ -7,6 +17,74 @@ function money(v){
   const n = Number(v || 0);
   return n.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 }
+
+async function carregarResumoFinanceiro(eventoId){
+  const hint = document.getElementById('finResumoHint');
+  const elReceita = document.getElementById('finReceita');
+  const elReceitaBase = document.getElementById('finReceitaBase');
+  const elDespesas = document.getElementById('finDespesas');
+  const elEquipe = document.getElementById('finEquipe');
+  const elOper = document.getElementById('finOperacional');
+  const elLucro = document.getElementById('finLucro');
+  const elLucroHint = document.getElementById('finLucroHint');
+  const elMargem = document.getElementById('finMargem');
+  const elPag = document.getElementById('finPagamentos');
+
+  // If the section isn't present (future layouts), no-op
+  if(!hint || !elReceita) return;
+
+  hint.textContent = 'Carregando…';
+  const placeholders = [elReceita, elReceitaBase, elDespesas, elEquipe, elOper, elLucro, elLucroHint, elMargem, elPag];
+  for(const el of placeholders){ if(el) el.textContent = '—'; }
+
+  try{
+    const res = await fetch(`/api/eventos/${eventoId}/resumo-financeiro`);
+    if(!res.ok){
+      // Most common: no permission (403) or migrations not applied yet.
+      hint.textContent = (res.status === 403) ? 'Sem permissão para ver o resumo financeiro.' : 'Resumo financeiro indisponível.';
+      return;
+    }
+    const data = await res.json();
+    if(!data?.ok){
+      hint.textContent = 'Resumo financeiro indisponível.';
+      return;
+    }
+
+    const receitaContratada = Number(data.receita_contratada || 0);
+    const entradas = Number(data.entradas_total || 0);
+    const saidas = Number(data.saidas_total || 0);
+    const equipe = Number(data.custo_equipe || 0);
+    const oper = Number(data.custo_operacional || 0);
+    const lucro = Number(data.lucro_estimado || 0);
+    const margem = Number(data.margem_percentual || 0);
+
+    // UI: show revenue as contracted when available, otherwise cash received.
+    const receitaLabel = (receitaContratada > 0) ? 'Contrato' : 'Caixa';
+    const receitaValue = (receitaContratada > 0) ? receitaContratada : entradas;
+
+    elReceita.textContent = money(receitaValue);
+    elReceitaBase.textContent = `Base: ${receitaLabel}`;
+    elDespesas.textContent = money(saidas);
+    elEquipe.textContent = money(equipe);
+    elOper.textContent = money(oper);
+    elLucro.textContent = money(lucro);
+    elLucroHint.textContent = (receitaValue > 0) ? `Receita (${receitaLabel}) - Despesas` : 'Receita não definida';
+    elMargem.textContent = (receitaValue > 0) ? `${margem.toFixed(2)}%` : '—';
+
+    if (data.pagamentos && typeof data.pagamentos === 'object') {
+      const pTot = Number(data.pagamentos.parcelas_total || 0);
+      const pPago = Number(data.pagamentos.parcelas_pagas_total || 0);
+      elPag.textContent = `Recebido: ${money(pPago)} / ${money(pTot)}`;
+    } else {
+      elPag.textContent = `Recebido (Caixa): ${money(entradas)}`;
+    }
+
+    hint.textContent = 'Atualizado ✅';
+  }catch(e){
+    hint.textContent = 'Erro ao carregar resumo financeiro.';
+  }
+}
+
 
 function formatDateISO(iso){
   if(!iso) return '—';
@@ -77,6 +155,9 @@ async function carregar(){
   document.getElementById('valor_total').value = evento.valor_total || 0;
   document.getElementById('status').value = evento.status || 'orcamento';
   document.getElementById('forma_pagamento').value = evento.forma_pagamento || '';
+
+  // Phase 3.5 — resumo financeiro
+  await carregarResumoFinanceiro(id);
 }
 
 async function salvar(){
@@ -121,7 +202,9 @@ function setActiveTab(tab){
     m.hidden = !show;
   });
   if(tab === 'equipe') carregarEquipe();
+  if(['bebidas','doces','salgados','decoracao','estrutura'].includes(tab)) carregarCategoria(tab);
   if(tab === 'proposta') carregarPropostas();
+  if(tab === 'contrato') carregarContratos();
 }
 
 // ---------- Helpers (BRL) ----------
@@ -158,7 +241,7 @@ function equipeRowHTML(it){
       <td><span class="badge st-${(it.status||'pendente').toLowerCase()}">${it.status || 'pendente'}</span></td>
       <td class="actions">
         <button class="btn-mini" data-act="edit">Editar</button>
-        <button class="btn-mini danger" data-act="del">Excluir</button>
+        <button class="btn-mini danger" data-act="del">Arquivar</button>
       </td>
     </tr>
   `;
@@ -188,6 +271,183 @@ async function carregarEquipe(){
   const totalEl = document.getElementById('equipeTotal');
   if(totalEl) totalEl.textContent = money(total);
 }
+
+// ===============================
+// Itens genéricos por categoria (Bebidas, Doces, Salgados, Decoração, Estrutura)
+// ===============================
+let itemEditId = null;
+let itemEditCategoria = null;
+
+function cap(s){ return (s||'').charAt(0).toUpperCase() + (s||'').slice(1); }
+
+function itemRowHTML(it){
+  return `
+    <tr data-id="${it.id}">
+      <td>${escapeHtml(it.item || '—')}</td>
+      <td>${escapeHtml(it.fornecedor || '—')}</td>
+      <td class="num">${Number(it.quantidade || 0)}</td>
+      <td>${escapeHtml(it.unidade || '—')}</td>
+      <td class="num">${money(it.valor_unitario || 0)}</td>
+      <td class="num">${money(it.valor_total || 0)}</td>
+      <td><span class="status ${statusClass(it.status)}">${escapeHtml(it.status || 'pendente')}</span></td>
+      <td class="actions">
+        <button class="btn-mini" data-act="edit">Editar</button>
+        <button class="btn-mini danger" data-act="del">Arquivar</button>
+      </td>
+    </tr>
+  `;
+}
+
+function elSet(id, val){
+  const e = document.getElementById(id);
+  if(!e) return;
+  e.value = (val === null || val === undefined) ? '' : String(val);
+}
+
+function recalcTotalFromUnit(){
+  const qtd = Number(document.getElementById('itQtd')?.value || 0);
+  const vu = Number(document.getElementById('itVUnit')?.value || 0);
+  const tot = (qtd * vu);
+  const el = document.getElementById('itVTotal');
+  if(el) el.value = String(isFinite(tot) ? tot.toFixed(2) : '0.00');
+}
+
+async function carregarCategoria(categoria){
+  const eventoId = qs('id');
+  const tbody = document.getElementById(`${categoria}Tbody`);
+  const totalEl = document.getElementById(`${categoria}Total`);
+  if(!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="8" class="empty-row">Carregando…</td></tr>`;
+
+  const res = await fetch(`/api/eventos-itens?evento_id=${encodeURIComponent(eventoId)}&categoria=${encodeURIComponent(categoria)}`, { cache:'no-store' });
+  if(res.status === 401){ window.location.href='/login'; return; }
+  if(res.status === 403){ window.toast && window.toast('Sem permissão.'); tbody.innerHTML = `<tr><td colspan="8" class="empty-row">Sem permissão.</td></tr>`; return; }
+  if(!res.ok){
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-row">Erro ao carregar itens.</td></tr>`;
+    return;
+  }
+  const items = await res.json().catch(()=>[]);
+  if(!items.length){
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-row">Nenhum item ainda. Clique em <strong>Adicionar</strong>.</td></tr>`;
+  }else{
+    tbody.innerHTML = items.map(itemRowHTML).join('');
+  }
+  const total = items.reduce((acc,it)=> acc + Number(it.valor_total || 0), 0);
+  if(totalEl) totalEl.textContent = money(total);
+
+  tbody.querySelectorAll('tr[data-id]').forEach(tr=>{
+    tr.addEventListener('click', async (ev)=>{
+      const btn = ev.target.closest('button[data-act]');
+      if(!btn) return;
+      const act = btn.dataset.act;
+      const id = tr.dataset.id;
+      const it = items.find(x => String(x.id) === String(id));
+      if(!it) return;
+      if(act === 'edit') abrirModalItem('edit', categoria, it);
+      if(act === 'del') await excluirItem(it.id, categoria);
+    });
+  });
+}
+
+function abrirModalItem(mode, categoria, data){
+  itemEditId = (mode === 'edit') ? data.id : null;
+  itemEditCategoria = categoria;
+
+  const modal = document.getElementById('modalItem');
+  if(!modal) return;
+
+  document.getElementById('modalItemTitle').textContent = (mode === 'edit') ? `Editar ${cap(categoria)}` : `Adicionar em ${cap(categoria)}`;
+
+  elSet('itCategoria', cap(categoria));
+  elSet('itItem', (data?.item || ''));
+  elSet('itFornecedor', (data?.fornecedor || ''));
+  elSet('itQtd', (data?.quantidade ?? 1));
+  elSet('itUnid', (data?.unidade || ''));
+  elSet('itVUnit', (data?.valor_unitario ?? 0));
+  elSet('itVTotal', (data?.valor_total ?? 0));
+  elSet('itStatus', (data?.status || 'pendente'));
+  elSet('itObs', (data?.observacao || ''));
+
+  // default total calc when creating
+  if(mode !== 'edit'){
+    recalcTotalFromUnit();
+  }
+
+  modal.hidden = false;
+}
+
+function fecharModalItem(){
+  const modal = document.getElementById('modalItem');
+  if(modal) modal.hidden = true;
+  itemEditId = null;
+  itemEditCategoria = null;
+}
+
+async function salvarItem(){
+  const eventoId = qs('id');
+  const categoria = itemEditCategoria;
+  if(!categoria) return;
+
+  const item = (document.getElementById('itItem')?.value || '').trim();
+  if(!item){
+    window.toast && window.toast('Informe o item.');
+    document.getElementById('itItem')?.focus();
+    return;
+  }
+
+  const payload = {
+    evento_id: eventoId,
+    categoria,
+    item,
+    fornecedor: (document.getElementById('itFornecedor')?.value || '').trim() || null,
+    quantidade: Number(document.getElementById('itQtd')?.value || 0),
+    unidade: (document.getElementById('itUnid')?.value || '').trim() || null,
+    valor_unitario: Number(document.getElementById('itVUnit')?.value || 0),
+    valor_total: Number(document.getElementById('itVTotal')?.value || 0),
+    status: (document.getElementById('itStatus')?.value || 'pendente'),
+    observacao: (document.getElementById('itObs')?.value || '').trim() || null
+  };
+
+  const url = itemEditId ? `/api/eventos-itens/${itemEditId}` : '/api/eventos-itens';
+  const method = itemEditId ? 'PATCH' : 'POST';
+
+  const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), cache:'no-store' });
+  if(res.status === 401){ window.location.href='/login'; return; }
+  if(res.status === 403){ window.toast && window.toast('Sem permissão.'); return; }
+  if(!res.ok){
+    const msg = await res.text().catch(()=> '');
+    window.toast && window.toast('Erro ao salvar item. ' + (msg||''));
+    return;
+  }
+
+  fecharModalItem();
+  await carregarCategoria(categoria);
+  window.applyPermissionsToDOM && window.applyPermissionsToDOM(document);
+  window.toast && window.toast('Item salvo.');
+}
+
+async function excluirItem(id, categoria){
+  if(!confirm('Arquivar este item?')) return;
+  const res = await fetch(`/api/eventos-itens/${id}`, { method:'DELETE', cache:'no-store' });
+  if(res.status === 401){ window.location.href='/login'; return; }
+  if(res.status === 403){ window.toast && window.toast('Sem permissão.'); return; }
+  if(!res.ok){
+    window.toast && window.toast('Erro ao excluir item.');
+    return;
+  }
+  await carregarCategoria(categoria);
+  window.toast && window.toast('Item excluído.');
+}
+
+function bindCategoriaUI(categoria){
+  const btn = document.getElementById(`btn${cap(categoria)}Novo`);
+  if(btn){
+    btn.addEventListener('click', ()=> abrirModalItem('create', categoria, {}));
+  }
+}
+
+
 
 function abrirModalEquipe(mode, data){
   equipeEditId = (mode === 'edit') ? data.id : null;
@@ -288,10 +548,10 @@ async function salvarEquipe(){
 }
 
 async function excluirEquipe(id){
-  if(!confirm('Excluir este item de equipe?')) return;
+  if(!confirm('Arquivar este item de equipe?')) return;
   const res = await fetch(`/api/eventos-itens/${id}`, { method:'DELETE' });
   if(!res.ok){
-    alert('Erro ao excluir.');
+    alert('Erro ao arquivar.');
     return;
   }
   await carregarEquipe();
@@ -478,7 +738,33 @@ function bindPropostaUI(){
     });
   }
 
-  if(save && !save.dataset.bound){
+  
+  const versoesTbody = document.getElementById('propVersoes');
+  if(versoesTbody && !versoesTbody.dataset.boundActions){
+    versoesTbody.dataset.boundActions = '1';
+    versoesTbody.addEventListener('click', async (e) => {
+      const el = e.target;
+      if(!(el instanceof HTMLElement)) return;
+      const act = el.getAttribute('data-prop-action');
+      const pid = el.getAttribute('data-id');
+      if(!act || !pid) return;
+      if(act === 'enviar'){
+        if(await setPropStatus(pid, 'enviado')) await carregarPropostas();
+      }
+      if(act === 'aceitar'){
+        if(confirm('Marcar esta proposta como ACEITA?')){
+          if(await setPropStatus(pid, 'aceito')) await carregarPropostas();
+        }
+      }
+      if(act === 'recusar'){
+        if(confirm('Marcar esta proposta como RECUSADA?')){
+          if(await setPropStatus(pid, 'recusado')) await carregarPropostas();
+        }
+      }
+    });
+  }
+
+if(save && !save.dataset.bound){
     save.dataset.bound='1';
     save.addEventListener('click', async () => {
       const id = qs('id');
@@ -518,6 +804,39 @@ function formatDateTime(dt){
   if(!dt) return '—';
   const [d,t] = String(dt).split(' ');
   return `${formatDateISO(d)} ${t?.slice(0,5) || ''}`.trim();
+
+function renderPropStatusActions(v){
+  const st = String(v.status || 'rascunho').toLowerCase();
+  // Only allow transitions on latest versions; UI can still show buttons per row
+  if(st === 'rascunho'){
+    return ` <button class="btn-sm" data-prop-action="enviar" data-id="${v.id}" data-perm="propostas:update">Marcar como enviada</button>`;
+  }
+  if(st === 'enviado'){
+    return ` <button class="btn-sm" data-prop-action="aceitar" data-id="${v.id}" data-perm="propostas:update">Aceitar</button>
+             <button class="btn-sm danger" data-prop-action="recusar" data-id="${v.id}" data-perm="propostas:update">Recusar</button>`;
+  }
+  return '';
+}
+
+async function setPropStatus(id, status){
+  const res = await fetch(`/api/propostas/${id}/status`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ status })
+  });
+  if(res.status === 403){
+    window.toast && window.toast('Sem permissão.');
+    return false;
+  }
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    alert('Erro ao alterar status. ' + (t || ''));
+    return false;
+  }
+  return true;
+}
+
+
 }
 
 async function carregarPropostas(){
@@ -551,7 +870,11 @@ async function carregarPropostas(){
         <td><span class="pill">${'v'+v.versao}</span></td>
         <td>${safeTitle}</td>
         <td>${formatDateTime(v.created_at)}</td>
-        <td><a class="btn-sm" href="/api/propostas/${v.id}/render" target="_blank" rel="noopener">Abrir/Imprimir</a></td>
+        <td><span class="badge st-${String(v.status||'rascunho').toLowerCase()}">${v.status || 'rascunho'}</span></td>
+        <td>
+          <a class="btn-sm" href="/api/propostas/${v.id}/render" target="_blank" rel="noopener" data-perm="propostas:read">Abrir/Imprimir</a>
+          ${renderPropStatusActions(v)}
+        </td>
       `;
       tbody.appendChild(tr);
     });
@@ -577,6 +900,139 @@ async function carregarPropostas(){
   }
 
   renderPropItems();
+}
+
+// ===== Contratos (Fase 2.1) =====
+let lastContratoId = null;
+
+async function gerarContratoDaPropostaAceita(){
+  const eventoId = qs('id');
+  if(!eventoId) return false;
+
+  // Pick the latest accepted proposal from the table we already loaded
+  const resP = await fetch(`/api/eventos/${eventoId}/propostas`);
+  if(!resP.ok){ alert('Não foi possível carregar propostas.'); return false; }
+  const versoes = await resP.json();
+  const aceitas = (Array.isArray(versoes) ? versoes : []).filter(v => String(v.status||'').toLowerCase() === 'aceito');
+  if(!aceitas.length){ alert('Nenhuma proposta ACEITA encontrada. Marque uma proposta como ACEITA primeiro.'); return false; }
+
+  const proposta = aceitas[0];
+  const res = await fetch('/api/contratos/from-proposta', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ evento_id: Number(eventoId), proposta_id: Number(proposta.id) })
+  });
+  if(res.status === 403){ window.toast && window.toast('Sem permissão.'); return false; }
+  const out = await res.json().catch(()=>null);
+  if(!res.ok || !out || !out.ok){
+    alert((out && out.message) ? out.message : 'Erro ao gerar contrato.');
+    return false;
+  }
+  return true;
+}
+
+async function gerarLinkAceite(){
+  if(!lastContratoId){ alert('Gere ou selecione um contrato primeiro.'); return false; }
+  const res = await fetch(`/api/contratos/${lastContratoId}/aceite-link`, { method:'POST' });
+  if(res.status === 403){ window.toast && window.toast('Sem permissão.'); return false; }
+  const out = await res.json().catch(()=>null);
+  if(!res.ok || !out || !out.ok){
+    alert((out && out.message) ? out.message : 'Erro ao gerar link.');
+    return false;
+  }
+  try{
+    await navigator.clipboard.writeText(out.link);
+    alert('Link de aceite copiado para a área de transferência!');
+  }catch{
+    prompt('Copie o link de aceite:', out.link);
+  }
+  return true;
+}
+
+function bindContratoUI(){
+  const btnGerar = document.getElementById('btnContratoGerar');
+  const btnLink = document.getElementById('btnContratoGerarLink');
+
+  if(btnGerar && !btnGerar.dataset.bound){
+    btnGerar.dataset.bound='1';
+    btnGerar.addEventListener('click', async ()=>{
+      if(confirm('Gerar contrato a partir da proposta ACEITA?')){
+        if(await gerarContratoDaPropostaAceita()) await carregarContratos();
+      }
+    });
+  }
+
+  if(btnLink && !btnLink.dataset.bound){
+    btnLink.dataset.bound='1';
+    btnLink.addEventListener('click', async ()=>{ await gerarLinkAceite(); });
+  }
+
+  const tbody = document.getElementById('ctrRows');
+  if(tbody && !tbody.dataset.bound){
+    tbody.dataset.bound='1';
+    tbody.addEventListener('click', (e)=>{
+      const el = e.target;
+      if(!(el instanceof HTMLElement)) return;
+      const cid = el.getAttribute('data-ctr-id');
+      if(cid){ lastContratoId = Number(cid); }
+    });
+  }
+}
+
+async function carregarContratos(){
+  bindContratoUI();
+  const eventoId = qs('id');
+  if(!eventoId) return;
+  const res = await fetch(`/api/contratos?evento_id=${encodeURIComponent(eventoId)}`);
+  if(!res.ok) return;
+  const out = await res.json();
+  const list = out && out.ok ? (out.contratos || []) : [];
+
+  const tbody = document.getElementById('ctrRows');
+  const empty = document.getElementById('ctrEmpty');
+  const btnAbrir = document.getElementById('btnContratoAbrir');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+
+  if(Array.isArray(list) && list.length){
+    if(empty) empty.style.display='none';
+    list.forEach(c => {
+      const tr = document.createElement('tr');
+      const id = Number(c.id);
+      const st = String(c.status || 'rascunho');
+      const v = c.numero_versao ? ('v'+c.numero_versao) : '—';
+      const created = formatDateTime(c.criado_em || c.versao_criado_em || '');
+      tr.innerHTML = `
+        <td><span class="pill">#${id}</span></td>
+        <td>${st}</td>
+        <td>${v}</td>
+        <td>${created}</td>
+        <td>
+          <a class="btn-sm" href="/api/contratos/${id}/render" target="_blank" rel="noopener" data-perm="contratos:read" data-ctr-id="${id}">Abrir/Imprimir</a>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    lastContratoId = Number(list[0].id);
+  } else {
+    if(empty) empty.style.display='block';
+    lastContratoId = null;
+  }
+
+  if(btnAbrir){
+    if(lastContratoId){
+      btnAbrir.href = `/api/contratos/${lastContratoId}/render`;
+      btnAbrir.style.pointerEvents='';
+      btnAbrir.style.opacity='';
+    } else {
+      btnAbrir.href = '#';
+      btnAbrir.style.pointerEvents='none';
+      btnAbrir.style.opacity='.6';
+    }
+  }
+
+  // Apply RBAC UX after rendering
+  window.applyPermissionsToDOM && window.applyPermissionsToDOM(document);
 }
 
 // tabs click
@@ -680,3 +1136,39 @@ document.getElementById('modalEvento')?.addEventListener('click', (e) => {
   const t = e.target;
   if(t?.dataset?.close === '1') fecharModalEvento();
 });
+  // Apply once after initial render/bind
+  hfApplyPermissions();
+
+  // v78: bind generic category modules + modal buttons (safe init)
+try {
+    // bind modal close
+    const modal = document.getElementById('modalItem');
+    if(modal){
+      modal.addEventListener('click', (ev)=>{
+        if(ev.target?.dataset?.close) fecharModalItem();
+      });
+    }
+    document.getElementById('btnItemFechar')?.addEventListener('click', fecharModalItem);
+    document.getElementById('btnItemCancelar')?.addEventListener('click', fecharModalItem);
+    document.getElementById('btnItemSalvar')?.addEventListener('click', salvarItem);
+    document.getElementById('itQtd')?.addEventListener('input', recalcTotalFromUnit);
+    document.getElementById('itVUnit')?.addEventListener('input', recalcTotalFromUnit);
+
+    ['bebidas','doces','salgados','decoracao','estrutura'].forEach(cat=>{
+      bindCategoriaUI(cat);
+    });
+
+    // When switching tabs, if the module has a tbody for that category, load it.
+    document.querySelectorAll('.tab[data-tab]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const tab = btn.getAttribute('data-tab');
+        if(['bebidas','doces','salgados','decoracao','estrutura'].includes(tab)){
+          carregarCategoria(tab);
+        }
+      });
+    });
+  } catch {}
+}
+
+if (window.hfInitPage) window.hfInitPage('festa', __hfInit_festa);
+else document.addEventListener('DOMContentLoaded', () => __hfInit_festa({ restore:false }), { once:true });

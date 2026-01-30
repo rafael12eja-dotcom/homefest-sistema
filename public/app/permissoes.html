@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Permissões | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css?v=20260125-203500">
+  <link rel="stylesheet" href="/css/usuarios.css?v=20260125-203500">
+  <script src="/permissions.js?v=20260125-203500" defer></script>
+  <script src="/shell.js?v=20260125-203500" defer></script>
+  <script src="/js/permissoes.js?v=20260125-203500" defer></script>
+</head>
+<body class="layout">
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a>
+      <a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a>
+      <a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a>
+      <a class="nav-item" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a>
+      <a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a>
+      <a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a>
+      <a class="nav-item is-active" href="/app/permissoes" data-perm="permissoes:read"><span class="nav-ico">⚙️</span><span>Permissões</span></a>
+
+      <div class="nav-sep"></div>
+
+      <a class="nav-item nav-logout" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 class="title">Permissões por perfil</h1>
+        <div class="subtitle">Controle de acesso por módulo (multi-empresa). Somente admin.</div>
+      </div>
+    </header>
+
+    <section class="card">
+      <div id="msg" class="muted" style="margin-bottom:12px;"></div>
+
+      <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+        <label style="display:flex; flex-direction:column; gap:6px;">
+          <span class="muted">Perfil</span>
+          <select id="perfilSelect" class="input" style="min-width:220px;">
+            <option value="vendas">vendas</option>
+            <option value="financeiro">financeiro</option>
+            <option value="operacional">operacional</option>
+          </select>
+        </label>
+
+        <button class="btn btn-primary" id="btnLoad">Carregar</button>
+        <button class="btn" id="btnSave">Salvar</button>
+      </div>
+
+      <div style="overflow:auto; margin-top:16px;">
+        
+        <div class="page-actions" style="gap:10px; flex-wrap:wrap;">
+          <button class="btn-ghost" id="btnPresetVendas" type="button" data-perm="usuarios:update">Preset Vendas</button>
+          <button class="btn-ghost" id="btnPresetFinanceiro" type="button" data-perm="usuarios:update">Preset Financeiro</button>
+          <button class="btn-ghost" id="btnPresetOperacional" type="button" data-perm="usuarios:update">Preset Operacional</button>
+        </div>
+<table class="table" id="permTable" style="min-width:720px;">
+          <thead>
+            <tr>
+              <th>Módulo</th>
+              <th>read</th>
+              <th>create</th>
+              <th>update</th>
+              <th>delete</th>
+            </tr>
+          </thead>
+          <tbody id="permTbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

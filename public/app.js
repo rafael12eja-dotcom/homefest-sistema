@@ -1,236 +1,186 @@
 /*
   public/app.js
-  New Dark Dashboard controller.
-  Strategy (Option 1): make the dark dashboard a navigation hub that redirects to the existing legacy modules.
-  All clicks must either navigate, open a working modal, or be disabled with a tooltip.
+  Home Fest CRM / ERP — Shell SPA Router (no page reload)
+  - Keeps ONE sidebar + ONE permission state
+  - Loads legacy modules inside the shell via iframe (?embed=1)
+  - Direct URL access: /app/<view> loads index.html (worker rewrite) and router restores view
 */
 
 const views = {
   dashboard: { title: "Dashboard", hint: "Visão geral do dia e atalhos rápidos." },
-  clientes: { title: "Clientes", hint: "Abrir módulo de clientes." },
-  eventos: { title: "Festas", hint: "Abrir módulo de festas." },
-  financeiro: { title: "Financeiro", hint: "Abrir módulo financeiro." },
-  usuarios: { title: "Usuários", hint: "Gerenciar usuários e permissões." },
-  leads: { title: "Leads", hint: "Abrir módulo de leads." },
+  clientes: { title: "Clientes", hint: "Base de clientes e histórico." },
+  eventos: { title: "Festas", hint: "Agenda, eventos e itens." },
+  financeiro: { title: "Financeiro", hint: "Caixa, contas a receber/pagar e custos." },
+  leads: { title: "Leads", hint: "Captação e funil." },
+  usuarios: { title: "Usuários", hint: "Usuários e segurança." },
+  config: { title: "Configurações", hint: "Permissões (RBAC) e padrões." },
   contratos: { title: "Contratos", hint: "Em desenvolvimento." },
   patrimonio: { title: "Patrimônio", hint: "Em desenvolvimento." },
   relatorios: { title: "Relatórios", hint: "Em desenvolvimento." },
-  config: { title: "Configurações", hint: "Marca, permissões e padrões." },
 };
 
-// Stable routes to legacy modules (production-ready today).
-const ROUTE_MAP = {
-  clientes: "/app/clientes.html",
-  eventos: "/app/festas.html",
-  financeiro: "/app/financeiro.html",
-  usuarios: "/app/usuarios.html",
-  leads: "/app/leads.html",
+const LEGACY_IFRAME_SRC = {
+  clientes: "/app/clientes.html?embed=1",
+  eventos: "/app/festas.html?embed=1",
+  financeiro: "/app/financeiro.html?embed=1",
+  leads: "/app/leads.html?embed=1",
+  usuarios: "/app/usuarios.html?embed=1",
+  config: "/app/permissoes.html?embed=1",
 };
 
-// Views that are not implemented as legacy modules yet.
 const DEV_VIEWS = new Set(["contratos", "patrimonio", "relatorios"]);
 
-function navigateTo(path) {
-  window.location.href = path;
+function normalizeView(v) {
+  v = String(v || "").trim().toLowerCase();
+  if (!v) return "dashboard";
+  if (v === "permissoes") return "config";
+  if (v === "festas") return "eventos";
+  return views[v] ? v : "dashboard";
 }
 
-function setView(key) {
-  // buttons
-  document.querySelectorAll(".nav-item").forEach((btn) => {
-    btn.classList.toggle("is-active", btn.dataset.view === key);
-  });
-  // sections
-  document.querySelectorAll(".view").forEach((v) => v.classList.remove("is-active"));
-  const el = document.getElementById(`view-${key}`);
-  if (el) el.classList.add("is-active");
+function viewFromPathname(pathname) {
+  // Accept:
+  //  - /            -> dashboard
+  //  - /app         -> dashboard
+  //  - /app/        -> dashboard
+  //  - /app/<view>  -> view
+  const p = String(pathname || "/");
+  if (p === "/" || p === "/index.html") return "dashboard";
+  if (p === "/app" || p === "/app/") return "dashboard";
+  if (p.startsWith("/app/")) {
+    const seg = p.slice("/app/".length).split("/")[0];
+    return normalizeView(seg);
+  }
+  return "dashboard";
+}
 
-  // header
-  const meta = views[key] || { title: "Sistema", hint: "" };
+function pathForView(view) {
+  // Keep the URL stable for deep links and refresh safety.
+  if (view === "dashboard") return "/app";
+  return `/app/${view}`;
+}
+
+function setHeader(viewKey) {
+  const meta = views[viewKey] || { title: "Sistema", hint: "" };
   const titleEl = document.getElementById("pageTitle");
   const hintEl = document.getElementById("pageHint");
   if (titleEl) titleEl.textContent = meta.title;
-  if (hintEl) hintEl.textContent = meta.hint;
-
-  // close sidebar on mobile
-  document.querySelector(".sidebar")?.classList.remove("is-open");
+  if (hintEl) hintEl.textContent = meta.hint || "";
+  document.title = `${meta.title} • Home Fest & Eventos`;
 }
 
-function markAsDevDisabled(el, tooltip = "Em desenvolvimento") {
-  if (!el) return;
-  // Support both <button> and <a>
-  if (el.tagName === "BUTTON") {
-    el.disabled = true;
-  } else {
-    el.setAttribute("aria-disabled", "true");
-    el.addEventListener("click", (e) => e.preventDefault());
-  }
-  el.title = tooltip;
-  el.classList.add("is-disabled");
-}
+function ensureIframe(viewKey, viewEl) {
+  const src = LEGACY_IFRAME_SRC[viewKey];
+  if (!src) return;
 
-function wireSidebarNavigation() {
-  document.querySelectorAll(".nav-item").forEach((btn) => {
-    const key = btn.dataset.view;
-
-    // Dashboard stays inside the dark shell.
-    if (key === "dashboard") {
-      btn.addEventListener("click", () => setView("dashboard"));
-      return;
-    }
-
-    // Legacy modules: redirect.
-    if (ROUTE_MAP[key]) {
-      btn.addEventListener("click", () => navigateTo(ROUTE_MAP[key]));
-      return;
-    }
-
-    // Not implemented yet.
-    if (DEV_VIEWS.has(key)) {
-      markAsDevDisabled(btn, "Em desenvolvimento");
-      return;
-    }
-
-    // Config view is still inside the shell.
-    if (key === "config") {
-      btn.addEventListener("click", () => setView("config"));
-      return;
-    }
-
-    // Fallback: do nothing (but avoid dead click)
-    markAsDevDisabled(btn, "Em desenvolvimento");
-  });
-}
-
-// Mobile menu
-function wireMobileMenu() {
-  document.getElementById("btnMenu")?.addEventListener("click", () => {
-    document.querySelector(".sidebar")?.classList.toggle("is-open");
-  });
-}
-
-// Modal
-const modal = document.getElementById("modal");
-const modalSaveBtn = document.getElementById("modalSave");
-
-function openModal(title, hint, bodyHTML, opts = {}) {
-  document.getElementById("modalTitle").textContent = title;
-  document.getElementById("modalHint").textContent = hint || "";
-  document.getElementById("modalBody").innerHTML = bodyHTML || "";
-
-  // Save button behavior
-  if (modalSaveBtn) {
-    const showSave = opts.showSave !== false; // default true
-    modalSaveBtn.hidden = !showSave;
-    modalSaveBtn.textContent = opts.saveText || "Salvar";
-    modalSaveBtn.onclick = null;
-    if (typeof opts.onSave === "function") {
-      modalSaveBtn.onclick = opts.onSave;
-    }
-  }
-
-  modal.classList.add("is-open");
-  modal.setAttribute("aria-hidden", "false");
-}
-
-function closeModal() {
-  modal.classList.remove("is-open");
-  modal.setAttribute("aria-hidden", "true");
-  if (modalSaveBtn) {
-    modalSaveBtn.hidden = false;
-    modalSaveBtn.textContent = "Salvar";
-    modalSaveBtn.onclick = null;
-  }
-}
-
-modal?.addEventListener("click", (e) => {
-  if (e.target?.dataset?.close) closeModal();
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && modal?.classList.contains("is-open")) closeModal();
-});
-
-function wireDashboardActions() {
-  // Quick action: create a new party -> legacy festas (opens modal there)
-  document.querySelectorAll("[data-action='go-eventos']").forEach((btn) => {
-    btn.addEventListener("click", () => navigateTo("/app/festas.html?action=create"));
-  });
-
-  // Disable demo-only buttons inside dashboard tables/panels
-  document.querySelectorAll(".panel-actions .btn").forEach((btn) => {
-    const txt = (btn.textContent || "").trim().toLowerCase();
-    if (txt === "filtrar" || txt === "exportar") {
-      markAsDevDisabled(btn, "Em desenvolvimento");
-    }
-  });
-
-  // Disable demo "Abrir" buttons in the sample table (no real IDs yet)
-  document
-    .querySelectorAll("#view-dashboard .table .btn.btn-ghost.btn-sm")
-    .forEach((btn) => markAsDevDisabled(btn, "Em desenvolvimento"));
-}
-
-function wireQuickAdd() {
-  document.getElementById("btnQuickAdd")?.addEventListener("click", () => {
-    openModal(
-      "Novo",
-      "Escolha o que deseja criar.",
-      `
-      <div class="grid two">
-        <button class="btn btn-primary w-full" data-go="/app/clientes.html">+ Cliente</button>
-        <button class="btn btn-primary w-full" data-go="/app/festas.html?action=create">+ Festa</button>
-        <button class="btn btn-ghost w-full" data-go="/app/financeiro.html">+ Lançamento</button>
-        <button class="btn btn-ghost w-full" data-dev="1" title="Em desenvolvimento" disabled>+ Contrato</button>
+  // First time: replace placeholder UI by an iframe container.
+  if (!viewEl.dataset.embedded) {
+    viewEl.innerHTML = `
+      <div class="embed-wrap">
+        <iframe class="embed-frame" title="${views[viewKey]?.title || viewKey}" loading="eager"></iframe>
       </div>
-      `,
-      { showSave: false }
-    );
+    `;
+    viewEl.dataset.embedded = "1";
+  }
 
-    document.querySelectorAll("[data-go]").forEach((b) => {
-      b.addEventListener("click", () => navigateTo(b.dataset.go));
+  const iframe = viewEl.querySelector("iframe.embed-frame");
+  if (!iframe) return;
+
+  // Avoid resetting iframe if already on the same src (keeps scroll/form state).
+  if (iframe.getAttribute("src") !== src) {
+    iframe.setAttribute("src", src);
+  }
+}
+
+function showNoPermission() {
+  // Used only if the shell can't load permissions; backend remains source of truth.
+  const root = document.getElementById("content");
+  if (!root) return;
+  root.innerHTML = `
+    <section class="view is-active" id="view-noperm">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Sem permissão</div>
+            <div class="muted tiny">Você não tem permissão para acessar este módulo.</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <button class="btn" id="btnGoDash">Voltar ao Dashboard</button>
+        </div>
+      </div>
+    </section>
+  `;
+  const btn = document.getElementById("btnGoDash");
+  if (btn) btn.addEventListener("click", () => navigate("dashboard"));
+}
+
+function setView(viewKey, { push = true } = {}) {
+  viewKey = normalizeView(viewKey);
+
+  // Sidebar active state
+  document.querySelectorAll(".nav-item").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.view === viewKey);
+  });
+
+  // Sections active state
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("is-active"));
+  const viewEl = document.getElementById(`view-${viewKey}`);
+  if (viewEl) {
+    viewEl.classList.add("is-active");
+    if (LEGACY_IFRAME_SRC[viewKey]) ensureIframe(viewKey, viewEl);
+  }
+
+  setHeader(viewKey);
+
+  if (push) {
+    const nextPath = pathForView(viewKey);
+    if (window.location.pathname !== nextPath) {
+      history.pushState({ view: viewKey }, "", nextPath);
+    }
+  }
+
+  // Apply RBAC visibility after each navigation (shell-level)
+  try { if (window.hfApplyNavVisibility) window.hfApplyNavVisibility(document); } catch {}
+}
+
+function navigate(viewKey) {
+  setView(viewKey, { push: true });
+}
+
+function bindNav() {
+  document.querySelectorAll(".nav-item[data-view]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const v = btn.dataset.view;
+      if (DEV_VIEWS.has(v)) {
+        // Keep UX consistent: show the in-shell placeholder view instead of redirect.
+        setView(v, { push: true });
+        return;
+      }
+      navigate(v);
     });
   });
 }
 
-// Accent live (config)
-function wireAccent() {
-  document.getElementById("applyAccent")?.addEventListener("click", () => {
-    const val = document.getElementById("accentInput").value?.trim() || "#d4a84f";
-    document.documentElement.style.setProperty("--accent", val);
-  });
-}
-
-// Basic global search (UI-only)
-function wireSearch() {
-  document.getElementById("globalSearch")?.addEventListener("input", () => {
-    // UI-only: later we'll search in D1.
-  });
-}
-
-// Initialize
-(function init() {
-  wireSidebarNavigation();
-  wireMobileMenu();
-  wireDashboardActions();
-  wireQuickAdd();
-  wireAccent();
-  wireSearch();
-
-  // Keep the default view stable.
-  setView("dashboard");
-})();
-
-
-// Build marker (helps verify deployed version)
-(async function loadBuildTag(){
+async function init() {
+  // Permissions: load once and apply to sidebar buttons
   try {
-    const el = document.getElementById('buildTag');
-    if (!el) return;
-    const res = await fetch('/api/version', { cache: 'no-store' });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data && data.build) {
-      el.textContent = `(${data.build})`;
-    }
-  } catch (_) {}
-})();
+    if (window.hfInitPermissions) await window.hfInitPermissions();
+    if (window.hfApplyNavVisibility) window.hfApplyNavVisibility(document);
+  } catch {}
+
+  bindNav();
+
+  // Restore view from URL on first load
+  const initial = viewFromPathname(window.location.pathname);
+  setView(initial, { push: false });
+
+  // Back/forward support
+  window.addEventListener("popstate", () => {
+    const v = viewFromPathname(window.location.pathname);
+    setView(v, { push: false });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", init);

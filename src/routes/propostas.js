@@ -1,7 +1,11 @@
+import { json, ok, fail, getAuth, requireTenant } from '../utils/api.js';
+import { requirePermission } from '../utils/rbac.js';
+import { logAudit } from '../utils/audit.js';
+
 function html(body, status=200) {
   return new Response(body, {
     status,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control':'no-store' }
   });
 }
 
@@ -31,19 +35,120 @@ function calcTotals(items, desconto){
   return { subtotal, desconto: d, total };
 }
 
+
+function canTransitionStatus(from, to){
+  const f = String(from || 'rascunho').toLowerCase();
+  const t = String(to || '').toLowerCase();
+  if(!t) return false;
+  if(f === t) return true;
+  // Allowed flow: rascunho -> enviado -> (aceito|recusado)
+  if(f === 'rascunho' && t === 'enviado') return true;
+  if(f === 'enviado' && (t === 'aceito' || t === 'recusado')) return true;
+  // Allow admin to mark 'rascunho' directly to 'aceito/recusado' only through UI? keep strict.
+  return false;
+}
+
 export async function propostasAPI(request, env) {
+  const auth = getAuth(request);
+  const tenantErr = requireTenant(auth);
+  if (tenantErr) {
+    // This endpoint renders HTML; for invalid session, render a simple error page.
+    return html('<h1>Sessão inválida</h1>', 400);
+  }
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean); // ["api","propostas",":id","render?"]
   const id = parts[2];
   const action = parts[3];
 
+  // RBAC (propostas module)
+  // - Render/JSON read require 'read'
+  // - Status update requires 'update'
+  const actionLower = String(action || '').toLowerCase();
+  if (request.method === 'GET') {
+    const permErr = await requirePermission(env, auth, 'propostas', 'read');
+    if (permErr) return permErr;
+  }
+  if (request.method === 'POST' && actionLower === 'status') {
+    const permErr = await requirePermission(env, auth, 'propostas', 'update');
+    if (permErr) return permErr;
+  }
+
+
+
+  // Read proposal snapshot (JSON)
+  // GET /api/propostas/:id
+  if (request.method === 'GET' && id && !action) {
+    const prop = await env.DB.prepare('SELECT id, evento_id, versao, titulo, status, payload_json, created_at, updated_at FROM propostas WHERE id=?')
+      .bind(id).first();
+    if (!prop) return fail(404, 'NOT_FOUND', 'Proposta não encontrada.');
+
+    // Tenant check via event (fail-closed)
+    const ev = await env.DB.prepare('SELECT id, cliente_id, empresa_id, tipo_evento, data_evento, contrato_numero FROM eventos WHERE id=? AND empresa_id=? AND ativo=1')
+      .bind(prop.evento_id, auth.empresaId).first();
+    if (!ev) return fail(404, 'NOT_FOUND', 'Proposta não encontrada.');
+
+    const cli = await env.DB.prepare('SELECT id, nome, telefone, email FROM clientes WHERE id=? AND empresa_id=? AND ativo=1')
+      .bind(ev.cliente_id, auth.empresaId).first();
+
+    let payload = {};
+    try { payload = JSON.parse(prop.payload_json || '{}'); } catch { payload = {}; }
+
+    return json({
+      id: prop.id,
+      evento_id: prop.evento_id,
+      versao: prop.versao,
+      titulo: prop.titulo,
+      status: prop.status,
+      created_at: prop.created_at,
+      updated_at: prop.updated_at,
+      cliente: cli || null,
+      evento: ev || null,
+      payload,
+    });
+  }
+
+  // Status transitions (JSON)
+  // POST /api/propostas/:id/status { status }
+  if (request.method === 'POST' && id && actionLower === 'status') {
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object') return fail(400, 'BAD_REQUEST', 'JSON inválido.');
+    const nextStatus = String(body.status || '').trim().toLowerCase();
+    if (!['rascunho','enviado','aceito','recusado'].includes(nextStatus)) {
+      return fail(400, 'BAD_REQUEST', 'Status inválido.');
+    }
+
+    const prop = await env.DB.prepare('SELECT id, evento_id, status FROM propostas WHERE id=?').bind(id).first();
+    if (!prop) return fail(404, 'NOT_FOUND', 'Proposta não encontrada.');
+
+    // Tenant check via event (fail-closed)
+    const ev = await env.DB.prepare('SELECT id FROM eventos WHERE id=? AND empresa_id=? AND ativo=1').bind(prop.evento_id, auth.empresaId).first();
+    if (!ev) return fail(404, 'NOT_FOUND', 'Proposta não encontrada.');
+
+    const cur = String(prop.status || 'rascunho').toLowerCase();
+    if (!canTransitionStatus(cur, nextStatus)) {
+      return fail(409, 'INVALID_STATE', `Transição não permitida: ${cur} -> ${nextStatus}`);
+    }
+
+    await env.DB.prepare("UPDATE propostas SET status=?, updated_at=datetime('now') WHERE id=?").bind(nextStatus, id).run();
+    await logAudit(env, request, auth, { modulo: 'propostas', acao: 'update', entidade: 'propostas', entidadeId: id });
+
+    return ok({ id, status: nextStatus });
+  }
+
+  // PDF (optional, returns 501 unless configured)
+  // GET /api/propostas/:id/pdf
+  if (request.method === 'GET' && id && actionLower === 'pdf') {
+    return fail(501, 'NOT_IMPLEMENTED', 'Geração de PDF ainda não está configurada neste ambiente.');
+  }
+
   // Render proposal HTML
   if (request.method === 'GET' && id && action === 'render') {
-    const prop = await env.DB.prepare('SELECT * FROM propostas WHERE id=?').bind(id).first();
+    const prop = await env.DB.prepare('SELECT * FROM propostas WHERE id=? AND empresa_id=?').bind(id, auth.empresaId).first();
     if (!prop) return html('<h1>Proposta não encontrada</h1>', 404);
 
-    const ev = await env.DB.prepare('SELECT * FROM eventos WHERE id=?').bind(prop.evento_id).first();
-    const cli = ev ? await env.DB.prepare('SELECT * FROM clientes WHERE id=?').bind(ev.cliente_id).first() : null;
+    const ev = await env.DB.prepare('SELECT * FROM eventos WHERE id=? AND empresa_id=? AND ativo=1').bind(prop.evento_id, auth.empresaId).first();
+    if (!ev) return html('<h1>Proposta não encontrada</h1>', 404);
+    const cli = await env.DB.prepare('SELECT * FROM clientes WHERE id=? AND empresa_id=? AND ativo=1').bind(ev.cliente_id, auth.empresaId).first();
 
     let payload = {};
     try { payload = JSON.parse(prop.payload_json || '{}'); } catch { payload = {}; }
@@ -59,6 +164,22 @@ export async function propostasAPI(request, env) {
     const condicoes = escapeHtml(payload.condicoes || '');
     const observacoes = escapeHtml(payload.observacoes || '');
     const validade = escapeHtml(payload.validade || '');
+
+    const termos = payload.termos || {};
+    const termosHtml = `
+      <div style="margin-top:18px;">
+        <h3 style="margin:0 0 8px 0; font-size:16px;">Cláusulas (resumo)</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.45;">
+          <li>Convidado excedente: <strong>${money(termos.convidado_excedente_valor || 0)}</strong> por pessoa.</li>
+          <li>Cortesia de excedentes: até <strong>${Number(termos.excedentes_percentual_cortesia || 0)}%</strong>.</li>
+          <li>Pagantes a partir de <strong>${Number(termos.idade_pagante_a_partir || 0)} anos</strong>.</li>
+          <li>Duração: <strong>${Number(termos.duracao_horas || 0)}h</strong> + <strong>${Number(termos.tolerancia_min || 0)} min</strong> de tolerância.</li>
+          <li>Hora extra: <strong>${money(termos.hora_extra_valor || 0)}</strong> por hora ou fração.</li>
+          <li>Pagamento padrão: <strong>${Number(termos?.pagamento?.entrada_percentual || 0)}%</strong> de entrada e saldo até <strong>${Number(termos?.pagamento?.saldo_dias_antes_evento || 0)} dias</strong> antes do evento.</li>
+          <li>Quebras/danos: apurado ao final do evento, pagamento imediato (PIX/dinheiro/ou outro acordado).</li>
+        </ul>
+      </div>
+    `;
 
     const rowsHtml = items.map((it, idx) => {
       const desc = escapeHtml(it.desc || '');
@@ -76,7 +197,7 @@ export async function propostasAPI(request, env) {
       `;
     }).join('');
 
-    const stamp = escapeHtml(prop.created_at || '');
+    const stamp = escapeHtml(prop.criado_em || prop.created_at || '');
     const versao = Number(prop.versao || 1);
 
     const doc = `<!doctype html>
@@ -162,6 +283,8 @@ export async function propostasAPI(request, env) {
     ${condicoes ? `<div class="section"><h3>Condições</h3><div>${condicoes.replaceAll('\n','<br/>')}</div></div>` : ''}
     ${validade ? `<div class="section"><h3>Validade</h3><div>${validade.replaceAll('\n','<br/>')}</div></div>` : ''}
     ${observacoes ? `<div class="section"><h3>Observações</h3><div>${observacoes.replaceAll('\n','<br/>')}</div></div>` : ''}
+
+    ${termosHtml}
 
     <div class="footer">
       <div>Home Fest & Eventos • Proposta gerada pelo sistema</div>

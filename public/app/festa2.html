@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Central da Festa | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css?v=20260128-150000">
+  <link rel="stylesheet" href="/css/festa.css?v=20260128-150000">
+  <script src="/permissions.js?v=20260128-150000" defer></script>
+  <script src="/shell.js?v=20260128-150000" defer></script>
+</head>
+<body class="layout">
+
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+</nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+<div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+</div>
+  </aside>
+
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="title">Central da Festa</h1>
+        <p class="muted" id="subtitulo">Carregando…</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn-ghost" href="/app/festas" data-perm="eventos:read">← Voltar</a>
+        <button class="btn-ghost" id="btnEditarEvento" title="Editar dados da festa" data-perm="eventos:update">Editar festa</button>
+        <button class="btn-primary" id="btnSalvar" data-perm="eventos:update">Salvar</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <section class="card">
+        <h3>Resumo</h3>
+        <div class="badges">
+          <span class="badge" id="badgeStatus">Status</span>
+          <span class="badge gold" id="badgeContrato">Contrato</span>
+        </div>
+
+        <div class="summary">
+          <div>
+            <div class="k">Cliente</div>
+            <div class="v" id="clienteNome">—</div>
+          </div>
+          <div>
+            <div class="k">Telefone</div>
+            <div class="v"><a id="clienteTelefone" href="#" target="_blank">—</a></div>
+          </div>
+          <div>
+            <div class="k">Data</div>
+            <div class="v" id="eventoData">—</div>
+          </div>
+          <div>
+            <div class="k">Convidados</div>
+            <div class="v" id="eventoConvidados">—</div>
+          </div>
+          <div>
+            <div class="k">Valor (R$)</div>
+            <div class="v" id="eventoValor">—</div>
+          </div>
+          <div>
+            <div class="k">Forma de pagamento</div>
+            <div class="v" id="eventoPagamento">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Dados da Festa</h3>
+        <div class="form-grid">
+          <label>
+            Tipo de festa
+            <select id="tipo_evento">
+              <option value="Infantil">Infantil</option>
+              <option value="Adulto">Adulto</option>
+              <option value="Casamento">Casamento</option>
+              <option value="Corporativo">Corporativo</option>
+              <option value="Domiciliar">Domiciliar</option>
+              <option value="Coquetel">Coquetel</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+
+          <label>
+            Data do evento
+            <input id="data_evento" type="date" />
+          </label>
+
+          <label>
+            Convidados
+            <input id="convidados" type="number" min="0" />
+          </label>
+
+          <label>
+            Valor total (R$)
+            <input id="valor_total" type="number" min="0" step="0.01" />
+          </label>
+
+          <label class="span-2">
+            Status
+            <select id="status">
+              <option value="orcamento">Orçamento</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="fechado">Fechado</option>
+              <option value="em_producao">Em produção</option>
+              <option value="realizado">Realizado</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </label>
+
+          <label class="span-2">
+            Forma de pagamento
+            <select id="forma_pagamento">
+              <option value="">—</option>
+              <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+              <option value="À vista (desconto)">À vista (desconto)</option>
+              <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="hint">
+          <strong>Próximo passo:</strong> vamos transformar as abas abaixo em módulos completos (dropdown fixo + “Outro” + fornecedor + custo).
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="tabs">
+        <button class="tab active" data-tab="equipe">Equipe</button>
+        <button class="tab" data-tab="bebidas">Bebidas</button>
+        <button class="tab" data-tab="doces">Doces</button>
+        <button class="tab" data-tab="salgados">Salgados</button>
+        <button class="tab" data-tab="decoracao">Decoração</button>
+        <button class="tab" data-tab="estrutura">Estrutura</button>
+        <button class="tab" data-tab="proposta">Proposta</button>
+        <button class="tab" data-tab="contrato">Contrato</button>
+        <button class="tab" data-tab="pagamento">Pagamento</button>
+      </div>
+
+      
+      <div class="tab-panel" id="panel">
+
+        <!-- EQUIPE -->
+        <div class="module" data-module="equipe">
+          <div class="module-head">
+            <div>
+              <div class="module-title">Equipe</div>
+              <div class="module-sub">Cadastre a equipe por função/fornecedor e acompanhe o custo em tempo real.</div>
+            </div>
+            <div class="module-actions">
+              <div class="pill" title="Custo total da equipe nesta festa">
+                Total: <strong id="equipeTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnEquipeNovo" data-perm="eventos:update">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="equipeTable">
+              <thead>
+                <tr>
+                  <th>Função</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="equipeTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="hint">
+            Dica: use <strong>diária</strong> para equipe por turno, <strong>hora</strong> para extras, e <strong>evento</strong> para cachê fechado.
+          </div>
+        </div>
+
+        <!-- PLACEHOLDERS -->
+        
+        <div class="module" data-module="bebidas" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Bebidas</div>
+              <div class="module-sub">Registre bebidas, quantidades e custos. Total calculado automaticamente.</div>
+            </div>
+            <div class="module-actions">
+              <div class="pill" title="Custo total desta categoria">
+                Total: <strong id="bebidasTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnBebidasNovo" data-perm="eventos:update">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="bebidasTable">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="bebidasTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        
+        <div class="module" data-module="doces" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Doces</div>
+              <div class="module-sub">Cadastre doces/bolo e acompanhe custos.</div>
+            </div>
+            <div class="module-actions">
+              <div class="pill" title="Custo total desta categoria">
+                Total: <strong id="docesTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnDocesNovo" data-perm="eventos:update">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="docesTable">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="docesTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        
+        <div class="module" data-module="salgados" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Salgados</div>
+              <div class="module-sub">Cadastre salgados e acompanhe custos.</div>
+            </div>
+            <div class="module-actions">
+              <div class="pill" title="Custo total desta categoria">
+                Total: <strong id="salgadosTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnSalgadosNovo" data-perm="eventos:update">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="salgadosTable">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="salgadosTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        
+        <div class="module" data-module="decoracao" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Decoração</div>
+              <div class="module-sub">Cadastre itens de decoração e acompanhe custos.</div>
+            </div>
+            <div class="module-actions">
+              <div class="pill" title="Custo total desta categoria">
+                Total: <strong id="decoracaoTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnDecoracaoNovo" data-perm="eventos:update">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="decoracaoTable">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="decoracaoTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        
+        <div class="module" data-module="estrutura" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Estrutura</div>
+              <div class="module-sub">Cadastre estrutura (tendas, mesas, som, etc.) e acompanhe custos.</div>
+            </div>
+            <div class="module-actions">
+              <div class="pill" title="Custo total desta categoria">
+                Total: <strong id="estruturaTotal">R$ 0,00</strong>
+              </div>
+              <button class="btn-primary" id="btnEstruturaNovo" data-perm="eventos:update">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="estruturaTable">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Fornecedor</th>
+                  <th class="num">Qtd</th>
+                  <th>Unid.</th>
+                  <th class="num">R$ Unit.</th>
+                  <th class="num">R$ Total</th>
+                  <th>Status</th>
+                  <th class="actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="estruturaTbody">
+                <tr><td colspan="8" class="empty-row">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="module" data-module="proposta" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Proposta</div>
+              <div class="module-sub">Monte a proposta (itens + condições) e gere versões para o cliente.</div>
+            </div>
+            <div class="module-actions">
+              <button class="btn-ghost" id="btnPropAdicionar" data-perm="propostas:create">+ Item</button>
+              <button class="btn-primary" id="btnPropSalvar" data-perm="propostas:create">Salvar nova versão</button>
+              <a class="btn-ghost" id="btnPropImprimirUltima" href="#" target="_blank" rel="noopener" data-perm="propostas:read">Imprimir última</a>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:14px;">
+            <div class="card pad">
+              <div class="form-grid">
+                <label>Título
+                  <input id="propTitulo" type="text" placeholder="Ex: Proposta Comercial • Home Fest"/>
+                </label>
+                <label>Validade
+                  <input id="propValidade" type="text" placeholder="Ex: 7 dias a partir do envio"/>
+                </label>
+              </div>
+              <label style="margin-top:10px;">Condições
+                <textarea id="propCondicoes" rows="4" placeholder="Ex: 50% agora e 50% até 7 dias antes do evento."></textarea>
+              </label>
+              <label style="margin-top:10px;">Observações
+                <textarea id="propObs" rows="4" placeholder="Ex: Cardápio personalizado conforme reunião."></textarea>
+              </label>
+            </div>
+
+            <div class="card pad">
+              <div class="kpi-row">
+                <div class="kpi">
+                  <div class="k">Subtotal</div>
+                  <div class="v" id="propSubtotal">R$ 0,00</div>
+                </div>
+                <div class="kpi">
+                  <div class="k">Desconto</div>
+                  <div class="v">
+                    <input id="propDesconto" type="number" min="0" step="0.01" value="0" style="width:140px;"/>
+                  </div>
+                </div>
+                <div class="kpi">
+                  <div class="k">Total</div>
+                  <div class="v" id="propTotal">R$ 0,00</div>
+                </div>
+              </div>
+
+              <div class="table-wrap" style="margin-top:12px;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th style="width:44px;">#</th>
+                      <th>Item / Descrição</th>
+                      <th style="width:90px; text-align:right;">Qtd</th>
+                      <th style="width:140px; text-align:right;">Unitário</th>
+                      <th style="width:44px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="propItens"></tbody>
+                </table>
+                <div class="empty-text" id="propEmpty">Adicione itens para compor a proposta.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card pad" style="margin-top:14px;">
+            <div class="module-title" style="font-size:16px;">Versões geradas</div>
+            <div class="module-sub" style="margin-top:4px;">Cada salvamento cria uma nova versão (v1, v2, v3...).</div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:80px;">Versão</th>
+                    <th>Título</th>
+                    <th style="width:160px;">Criada em</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:240px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="propVersoes"></tbody>
+              </table>
+              <div class="empty-text" id="propVersoesEmpty">Nenhuma proposta gerada ainda.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="module" data-module="contrato" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Contrato</div>
+              <div class="module-sub">Gere o contrato a partir de uma proposta ACEITA e envie um link de aceite.</div>
+            </div>
+            <div class="module-actions">
+              <button class="btn-primary" id="btnContratoGerar" data-perm="contratos:create">Gerar contrato da proposta aceita</button>
+              <button class="btn-ghost" id="btnContratoGerarLink" data-perm="contratos:update">Gerar link de aceite</button>
+              <a class="btn-ghost" id="btnContratoAbrir" href="#" target="_blank" rel="noopener" data-perm="contratos:read">Abrir contrato</a>
+            </div>
+          </div>
+
+          <div class="card pad" style="margin-top:14px;">
+            <div class="module-title" style="font-size:16px;">Contratos do evento</div>
+            <div class="module-sub" style="margin-top:4px;">Cada contrato possui versões imutáveis (v1, v2...).</div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:90px;">Contrato</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:120px;">Versão</th>
+                    <th style="width:160px;">Criado em</th>
+                    <th style="width:240px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="ctrRows"></tbody>
+              </table>
+              <div class="empty-text" id="ctrEmpty">Nenhum contrato gerado ainda.</div>
+            </div>
+
+            <div class="hint" style="margin-top:12px;">
+              Recomendação: primeiro marque uma proposta como <strong>ACEITA</strong>. Depois gere o contrato e envie o link de aceite.
+            </div>
+          </div>
+        </div>
+
+<div class="module" data-module="pagamento" hidden>
+          <div class="empty">
+            <div class="empty-title">Pagamento (em breve)</div>
+            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MODAL EQUIPE -->
+      <div class="modal" id="modalEquipe" hidden>
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalEquipeTitle">
+          <div class="modal-head">
+            <div>
+              <div class="modal-title" id="modalEquipeTitle">Adicionar equipe</div>
+              <div class="modal-sub">Preencha os campos abaixo. O total é calculado automaticamente.</div>
+            </div>
+            <button class="icon-btn" id="btnEquipeFechar" aria-label="Fechar">✕</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label>Função</label>
+              <select id="eqFuncao">
+                <option value="">Selecione…</option>
+                <option>Garçom</option>
+                <option>Copeira</option>
+                <option>Cozinheira</option>
+                <option>Auxiliar de cozinha</option>
+                <option>Recreador(a)</option>
+                <option>Monitor(a)</option>
+                <option>Segurança</option>
+                <option>Recepcionista</option>
+                <option>Fotógrafo</option>
+                <option>Filmagem</option>
+                <option>Outro</option>
+              </select>
+              <input id="eqFuncaoOutro" class="mt8" placeholder="Digite a função…" hidden />
+            </div>
+
+            <div class="field">
+              <label>Fornecedor</label>
+              <input id="eqFornecedor" placeholder="Ex: Equipe própria / Fulano / Empresa X" />
+            </div>
+
+            <div class="field">
+              <label>Quantidade</label>
+              <input id="eqQtd" type="number" min="0" step="1" value="1" />
+            </div>
+
+            <div class="field">
+              <label>Unidade</label>
+              <select id="eqUnidade">
+                <option value="pessoa">pessoa</option>
+                <option value="diaria">diária</option>
+                <option value="hora">hora</option>
+                <option value="evento">evento</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Valor unitário</label>
+              <input id="eqValorUnit" inputmode="decimal" placeholder="0,00" />
+            </div>
+
+            <div class="field">
+              <label>Valor total</label>
+              <input id="eqValorTotal" inputmode="decimal" placeholder="0,00" />
+              <div class="micro">Se deixar vazio, o sistema calcula: quantidade × unitário.</div>
+            </div>
+
+            <div class="field">
+              <label>Status</label>
+              <select id="eqStatus">
+                <option value="pendente">pendente</option>
+                <option value="confirmado">confirmado</option>
+                <option value="pago">pago</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Observação</label>
+              <input id="eqObs" placeholder="Ex: 17h–23h, uniforme, deslocamento..." />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-ghost" id="btnEquipeCancelar" data-close="1">Cancelar</button>
+            <button class="btn-primary" id="btnEquipeSalvar" data-perm="eventos:update">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- MODAL EDITAR FESTA -->
+    <div class="modal" id="modalEvento" hidden>
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalEventoTitle">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title" id="modalEventoTitle">Editar Festa</div>
+            <div class="micro">Atualize os dados básicos do evento e do contrato.</div>
+          </div>
+          <button class="icon-btn" data-close="1" aria-label="Fechar">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Cliente</label>
+              <select id="evCliente"></select>
+            </div>
+
+            <div class="field">
+              <label>Tipo</label>
+              <select id="evTipo">
+                <option value="Infantil">Infantil</option>
+                <option value="Adulto">Adulto</option>
+                <option value="Casamento">Casamento</option>
+                <option value="Corporativo">Corporativo</option>
+                <option value="Domiciliar">Domiciliar</option>
+                <option value="Coquetel">Coquetel</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Data</label>
+              <input type="date" id="evData" />
+            </div>
+
+            <div class="field">
+              <label>Convidados</label>
+              <input type="number" id="evConvidados" min="0" />
+            </div>
+
+            <div class="field">
+              <label>Valor total (R$)</label>
+              <input id="evValorTotal" inputmode="decimal" placeholder="0,00" />
+            </div>
+
+            <div class="field">
+              <label>Status</label>
+              <select id="evStatus">
+                <option value="orcamento">Orçamento</option>
+                <option value="confirmado">Confirmado</option>
+                <option value="fechado">Fechado</option>
+                <option value="em_producao">Em produção</option>
+                <option value="realizado">Realizado</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+
+            <div class="field span-2">
+              <label>Forma de pagamento</label>
+              <select id="evForma">
+                <option value="">—</option>
+                <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+                <option value="À vista (desconto)">À vista (desconto)</option>
+                <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Contrato</label>
+              <input id="evContrato" placeholder="HF-AAAA-00000" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-ghost" data-close="1">Cancelar</button>
+          <button class="btn-primary" id="btnEventoSalvar" data-perm="eventos:update">Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="/js/festa.js?v=20260128-150000"></script>
+
+    <!-- Modal genérico: itens por categoria (exceto Equipe) -->
+    <div class="modal" id="modalItem" hidden>
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalItemTitle">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title" id="modalItemTitle">Adicionar item</div>
+            <div class="modal-sub">Preencha os campos abaixo. O total é calculado automaticamente.</div>
+          </div>
+          <button class="icon-btn" id="btnItemFechar" aria-label="Fechar">✕</button>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Categoria</label>
+            <input id="itCategoria" type="text" disabled />
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="itStatus">
+              <option value="pendente">Pendente</option>
+              <option value="ok">OK</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Item</label>
+            <input id="itItem" type="text" placeholder="Ex.: Refrigerante 2L, Bolo temático..." />
+          </div>
+          <div class="field">
+            <label>Fornecedor</label>
+            <input id="itFornecedor" type="text" placeholder="Opcional" />
+          </div>
+
+          <div class="field">
+            <label>Quantidade</label>
+            <input id="itQtd" type="number" min="0" step="1" value="1" />
+          </div>
+          <div class="field">
+            <label>Unidade</label>
+            <input id="itUnid" type="text" placeholder="un, pct, cx..." />
+          </div>
+
+          <div class="field">
+            <label>Valor unitário (R$)</label>
+            <input id="itVUnit" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="field">
+            <label>Valor total (R$)</label>
+            <input id="itVTotal" type="number" min="0" step="0.01" value="0" />
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1">
+            <label>Observação</label>
+            <textarea id="itObs" rows="3" placeholder="Opcional"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" id="btnItemCancelar">Cancelar</button>
+          <button class="btn-primary" id="btnItemSalvar" data-perm="eventos:update">Salvar</button>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

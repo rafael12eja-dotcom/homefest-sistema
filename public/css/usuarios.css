@@ -1,0 +1,21 @@
+/* usuarios.css
+   Shared styles for Usuarios & Permissoes pages.
+   Keep light; rely on layout.css for global components.
+*/
+.page-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.page-head .actions { display:flex; gap:10px; flex-wrap:wrap; }
+
+.table-wrap { overflow:auto; border-radius:14px; border:1px solid rgba(255,255,255,.08); }
+.table-wrap table { width:100%; border-collapse:collapse; }
+.table-wrap th, .table-wrap td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; }
+.table-wrap th { font-weight:600; color:rgba(255,255,255,.85); background:rgba(255,255,255,.03); position:sticky; top:0; z-index:1; }
+
+.form-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+.form-row .field { flex:1; min-width:220px; }
+.field label { display:block; font-size:12px; color:rgba(255,255,255,.7); margin-bottom:6px; }
+.field input, .field select, .field textarea { width:100%; }
+
+.preset-bar { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.preset-bar .btn { border-radius:999px; }
+
+.help-muted { color: rgba(255,255,255,.65); font-size: 13px; }

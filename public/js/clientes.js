@@ -11,6 +11,8 @@
 
 function el(id){ return document.getElementById(id); }
 
+function hfApplyPermissions(){ try { if (window.applyPermissionsToDOM) window.applyPermissionsToDOM(document); } catch {} }
+
 function money(v){
   const n = Number(v || 0);
   return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -58,20 +60,6 @@ function getHashParam(name){
 let clientes = [];
 let currentCliente = null;
 
-async function apiJson(url, options){
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options && options.headers ? options.headers : {}),
-    }
-  });
-  if(!res.ok){
-    const t = await res.text().catch(() => '');
-    throw new Error(t || `HTTP ${res.status}`);
-  }
-  return await res.json();
-}
 
 function toggleNovo(show){
   el('novoCard').hidden = !show;
@@ -168,7 +156,11 @@ function renderTable(){
         <td><span class="pill small">${festas}</span></td>
         <td>${last}</td>
         <td>
-          <button class="btn-ghost btn-sm" data-ver="${c.id}">Ver</button>
+          <div class="row-actions">
+            <button class="btn-ghost btn-sm" data-ver="${c.id}" data-perm="clientes:read">Ver</button>
+            <a class="btn-ghost btn-sm" href="/app/festas?action=create&cliente_id=${c.id}" data-criarfesta="${c.id}" data-perm="eventos:create">Criar festa</a>
+            <button class="btn-danger btn-sm" data-arquivar="${c.id}" data-perm="clientes:delete">Arquivar</button>
+          </div>
         </td>
       </tr>
     `;
@@ -179,7 +171,7 @@ function renderTable(){
 }
 
 async function carregarClientes(){
-  clientes = await apiJson('/api/clientes');
+  clientes = await window.hfApiJson('/api/clientes');
   renderTable();
 }
 
@@ -206,7 +198,7 @@ function renderDrawer(cliente, eventos){
         <td>${badge(e.status)}</td>
         <td>${money(e.valor_total)}</td>
         <td>${e.contrato_numero || '—'}</td>
-        <td><a class="btn-sm primary" href="/app/festa.html?id=${e.id}">Abrir</a></td>
+        <td><a class="btn-sm primary" href="/app/festa?id=${e.id}">Abrir</a></td>
       </tr>
     `;
   }).join('');
@@ -215,14 +207,34 @@ function renderDrawer(cliente, eventos){
   el('d_eventos_count').textContent = String((eventos || []).length);
 
   // Quick actions
-  el('btnCriarFesta').setAttribute('href', `/app/festas.html?action=create&cliente_id=${cliente.id}`);
+  el('btnCriarFesta').setAttribute('href', `/app/festas?action=create&cliente_id=${cliente.id}`);
 }
 
 async function verCliente(id){
-  const data = await apiJson('/api/clientes/' + id);
+  const data = await window.hfApiJson('/api/clientes/' + id);
   renderDrawer(data.cliente, data.eventos);
   setHashParam('cliente', id);
   openDrawer();
+}
+
+
+async function arquivarCliente(id){
+  if(!id) return;
+  const okConfirm = confirm('Arquivar este cliente? Ele não será excluído definitivamente e poderá ser restaurado no futuro (quando implementarmos a lixeira).');
+  if(!okConfirm) return;
+
+  try {
+    await window.hfApiJson('/api/clientes/' + id, { method: 'DELETE' });
+    // If drawer is open for this client, close it to avoid stale view.
+    if (currentCliente && Number(currentCliente.id) === Number(id)) {
+      closeDrawer();
+      setHashParam('cliente', null);
+    }
+    await carregarClientes();
+  } catch (err) {
+    console.error('[clientes] erro ao arquivar', err);
+    alert('Erro ao arquivar cliente. Veja o console para detalhes.');
+  }
 }
 
 async function criarCliente(){
@@ -231,10 +243,11 @@ async function criarCliente(){
     alert('Informe o nome do cliente.');
     return;
   }
-  await apiJson('/api/clientes', { method: 'POST', body: JSON.stringify(payload) });
+  await window.hfApiJson('/api/clientes', { method: 'POST', body: JSON.stringify(payload) });
   toggleNovo(false);
   fillCreateForm(null);
   await carregarClientes();
+  hfApplyPermissions();
 }
 
 async function salvarEdicao(){
@@ -244,12 +257,12 @@ async function salvarEdicao(){
     alert('Informe o nome do cliente.');
     return;
   }
-  const data = await apiJson('/api/clientes/' + currentCliente.id, { method: 'PUT', body: JSON.stringify(payload) });
+  const data = await window.hfApiJson('/api/clientes/' + currentCliente.id, { method: 'PUT', body: JSON.stringify(payload) });
   currentCliente = data.cliente;
   // refresh list (keeps search)
   await carregarClientes();
   // refresh drawer
-  const full = await apiJson('/api/clientes/' + currentCliente.id);
+  const full = await window.hfApiJson('/api/clientes/' + currentCliente.id);
   renderDrawer(full.cliente, full.eventos);
   el('editCard').hidden = true;
   el('btnFecharEditar').hidden = true;
@@ -281,11 +294,25 @@ function bind(){
   el('q').addEventListener('input', renderTable);
 
   el('clientesLista').addEventListener('click', (ev) => {
-    const btn = ev.target.closest('[data-ver]');
+    const btn = ev.target.closest('[data-ver],[data-arquivar]');
     if(!btn) return;
-    const id = Number(btn.getAttribute('data-ver'));
-    if(id) verCliente(id);
+
+    const verId = btn.getAttribute('data-ver');
+    const arqId = btn.getAttribute('data-arquivar');
+
+    if (verId) {
+      const id = Number(verId);
+      if(id) verCliente(id);
+      return;
+    }
+
+    if (arqId) {
+      const id = Number(arqId);
+      if(id) arquivarCliente(id);
+      return;
+    }
   });
+
 
   el('btnFecharDrawer').addEventListener('click', closeDrawer);
   el('drawerBackdrop').addEventListener('click', closeDrawer);
@@ -296,8 +323,17 @@ function bind(){
   el('btnSalvarEdicao').addEventListener('click', salvarEdicao);
 }
 
-(async function init(){
+// Safe init entrypoint (used by shell.js hfInitPage)
+async function __hfInit_clientes({ restore } = {}){
+  try {
+    if (window.hfPermsReady) await window.hfPermsReady;
+    if (window.hfCanRead && !window.hfCanRead('clientes')) {
+      window.hfRenderNoPermission && window.hfRenderNoPermission({ modulo: 'clientes', title: 'Sem permissão', container: document.querySelector('main') });
+      return;
+    }
+  } catch {}
   bind();
+  hfApplyPermissions();
   await carregarClientes();
 
   // Deep link support: /app/clientes.html#cliente=123
@@ -308,4 +344,7 @@ function bind(){
       try { await verCliente(n); } catch { /* ignore */ }
     }
   }
-})();
+}
+
+if (window.hfInitPage) window.hfInitPage('clientes', __hfInit_clientes);
+else document.addEventListener('DOMContentLoaded', () => __hfInit_clientes({ restore:false }), { once:true });

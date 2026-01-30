@@ -1,4 +1,19 @@
+function __hfInit_festas(ctx){
 function el(id){ return document.getElementById(id); }
+
+function hfApplyPermissions(){ try { if (window.applyPermissionsToDOM) window.applyPermissionsToDOM(document); } catch {} }
+
+
+// Basic HTML/attribute escaping to avoid breaking option labels.
+function escapeHtml(s){
+  return String(s ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+function escapeAttr(s){ return escapeHtml(s).replaceAll('\n', ' '); }
 
 function statusLabel(st){
   switch(st){
@@ -48,6 +63,50 @@ let festas = [];
 let clientes = [];
 let editId = null;
 
+function setCreateUrl(action){
+  try {
+    const url = new URL(window.location.href);
+    if (action) url.searchParams.set('action', action);
+    else url.searchParams.delete('action');
+    // Keep other params (e.g., cliente_id) intact unless action is removed.
+    if (!action) url.searchParams.delete('cliente_id');
+    window.history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+  } catch {
+    // no-op
+  }
+}
+
+function enterCreateMode(mode){
+  document.body.classList.add('is-creating');
+  const topBtn = el('btnNova');
+  if (topBtn) {
+    topBtn.textContent = 'Voltar';
+    topBtn.href = '/app/festas';
+  }
+  const panel = el('createPanel');
+  if (panel) panel.hidden = false;
+  const title = el('modalTitle');
+  if (title) title.textContent = mode === 'edit' ? 'Editar Festa' : 'Nova Festa';
+  const btn = el('btnSalvarNova');
+  if (btn) btn.textContent = mode === 'edit' ? 'Salvar alterações' : 'Criar festa';
+  // Keep the primary CTA visible at the top of the screen flow.
+  panel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+}
+
+function exitCreateMode(){
+  document.body.classList.remove('is-creating');
+  const topBtn = el('btnNova');
+  if (topBtn) {
+    topBtn.textContent = '+ Nova festa';
+    topBtn.href = '/app/festas?action=create';
+  }
+  const panel = el('createPanel');
+  if (panel) panel.hidden = true;
+  showQuickCliente(false);
+  editId = null;
+  setCreateUrl(null);
+}
+
 function setSaveEnabled(enabled, reason){
   const btn = el('btnSalvarNova');
   if (!btn) return;
@@ -61,13 +120,33 @@ function showQuickCliente(show){
   box.hidden = !show;
 }
 
+
+function ensureConvidadosOptions(){
+  const sel = el('convidados');
+  if (!sel || sel.tagName !== 'SELECT') return;
+  if (sel.dataset.ready === '1') return;
+  sel.innerHTML = '<option value="">Selecione</option>';
+  for (let i = 10; i <= 500; i += 10) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = String(i);
+    sel.appendChild(opt);
+  }
+  sel.dataset.ready = '1';
+}
+
 async function carregarClientes(){
-  const res = await fetch('/api/clientes');
-  if (res.status === 401) {
-    window.location.href = '/login.html';
+  // IMPORTANTE: window.apiJson já faz parse do JSON e trata 401/403.
+  // /api/clientes (legacy) retorna um ARRAY direto.
+  let data;
+  try {
+    data = await window.hfApiJson('/api/clientes', { cache: 'no-store' });
+  } catch (err) {
+    toast('Falha ao carregar clientes.');
+    clientes = [];
     return;
   }
-  clientes = res.ok ? await res.json() : [];
+  clientes = Array.isArray(data) ? data : (data?.items || []);
   const sel = el('cliente_id');
   if (!sel) return;
 
@@ -77,13 +156,27 @@ async function carregarClientes(){
     return;
   }
 
-  sel.innerHTML = clientes.map(c => `<option value="${c.id}">${c.nome} (${c.telefone || 's/ tel'})</option>`).join('');
+  sel.innerHTML = clientes.map(c => {
+    const nome = escapeHtml(c.nome || '');
+    const tel = c.telefone ? String(c.telefone) : '';
+    const title = tel ? ` title="${escapeAttr(tel)}"` : '';
+    return `<option value="${c.id}"${title}>${nome}</option>`;
+  }).join('');
   setSaveEnabled(true);
 }
 
 async function carregarFestas(){
-  const res = await fetch('/api/eventos');
-  festas = res.ok ? await res.json() : [];
+  let data;
+  try {
+    data = await window.hfApiJson('/api/eventos', { cache: 'no-store' });
+  } catch (err) {
+    toast('Falha ao carregar festas.');
+    festas = [];
+    render();
+    return;
+  }
+  // /api/eventos retorna um ARRAY direto.
+  festas = Array.isArray(data) ? data : (data?.items || []);
   render();
 }
 
@@ -110,7 +203,7 @@ function render(){
       <td>${f.contrato_numero || '—'}</td>
       <td>
         <div class="actions">
-          <a class="btn-sm primary" href="/app/festa.html?id=${f.id}">Abrir</a>
+          <a class="btn-sm primary" href="/app/festa?id=${f.id}">Abrir</a>
           <button class="btn-sm" data-action="edit" data-id="${f.id}" title="Editar">Editar</button>
           <button class="btn-sm danger" data-action="del" data-id="${f.id}" title="Excluir">Excluir</button>
         </div>
@@ -121,18 +214,13 @@ function render(){
   tbody.innerHTML = rows || `<tr><td colspan="9">Nenhuma festa encontrada.</td></tr>`;
 }
 
+// Backward compatible function names (older builds used a modal).
+// Now we use a full-page create panel and normal page scroll.
 function abrirModal(mode){
-  el('modalBackdrop').hidden = false;
-  el('modalNova').hidden = false;
-  const title = el('modalTitle');
-  if (title) title.textContent = mode === 'edit' ? 'Editar Festa' : 'Nova Festa';
-  const btn = el('btnSalvarNova');
-  if (btn) btn.textContent = mode === 'edit' ? 'Salvar alterações' : 'Criar festa';
+  enterCreateMode(mode);
 }
 function fecharModal(){
-  el('modalBackdrop').hidden = true;
-  el('modalNova').hidden = true;
-  editId = null;
+  exitCreateMode();
 }
 
 function clearForm(){
@@ -181,29 +269,33 @@ async function salvarFesta(){
   const url = editId ? `/api/eventos/${editId}` : '/api/eventos';
   const method = editId ? 'PATCH' : 'POST';
 
-  const res = await fetch(url, {
-    method,
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-
-  if(!res.ok){
-    const txt = await res.text().catch(()=>'');
-    toast('Erro ao salvar festa. ' + (txt || ''));
+  let out;
+  try {
+    out = await window.hfApiJson(url, {
+      method,
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    toast('Erro ao salvar festa.');
     return;
   }
 
-  const out = await res.json().catch(() => ({}));
+  if (!out || out.ok !== true) {
+    toast(out?.error ? String(out.error) : 'Erro ao salvar festa.');
+    return;
+  }
 
   fecharModal();
   await carregarFestas();
+  hfApplyPermissions();
   toast(editId ? 'Festa atualizada.' : 'Festa criada.');
 
   // Redirect to event central on create for a coherent flow.
   if (!editId) {
     const newId = out?.id || out?.evento_id || out?.evento?.id;
     if (newId) {
-      window.location.href = `/app/festa.html?id=${newId}`;
+      window.location.href = `/app/festa?id=${newId}`;
     }
   }
 }
@@ -216,24 +308,37 @@ async function criarClienteRapido(){
     el('qc_nome')?.focus();
     return;
   }
-
-  const res = await fetch('/api/clientes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nome, telefone })
-  });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(()=>'');
-    alert('Erro ao criar cliente. ' + txt);
+  if (!telefone) {
+    toast('Informe o telefone do cliente.');
+    el('qc_telefone')?.focus();
     return;
   }
 
-  const data = await res.json().catch(()=>null);
-  await carregarClientes();
-  if (data?.id) {
-    el('cliente_id').value = String(data.id);
+  let out;
+  try {
+    out = await window.hfApiJson('/api/clientes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    // Quick create: mínimo viável (nome + telefone, email opcional)
+    body: JSON.stringify({
+      nome,
+      telefone,
+      email: (el('qc_email')?.value || '').trim() || null
+    })
+    });
+  } catch (err) {
+    // window.apiJson já exibiu toast para 403 e redirecionou no 401.
+    toast('Não foi possível criar o cliente.');
+    return;
   }
+
+  if (!out || out.ok !== true) {
+    toast(out?.error ? String(out.error) : 'Erro ao criar cliente.');
+    return;
+  }
+
+  await carregarClientes();
+  if (out?.id) el('cliente_id').value = String(out.id);
   showQuickCliente(false);
   toast('Cliente criado.');
 }
@@ -248,18 +353,28 @@ async function excluirFesta(id){
     return;
   }
   await carregarFestas();
+  hfApplyPermissions();
   toast('Festa excluída.');
 }
 
 async function abrirCriacao(preselectClienteId){
-  await carregarClientes();
+  ensureConvidadosOptions();
+  // Open create panel immediately for instant feedback.
   clearForm();
+  showQuickCliente(false);
+  setCreateUrl('create');
+  abrirModal('create');
+
+  const sel = el('cliente_id');
+  if (sel) {
+    sel.innerHTML = '<option value="">Carregando clientes...</option>';
+  }
+  setSaveEnabled(false, 'Carregando clientes...');
+
+  await carregarClientes();
   if (preselectClienteId) {
-    const sel = el('cliente_id');
     if (sel) sel.value = String(preselectClienteId);
   }
-  showQuickCliente(false);
-  abrirModal('create');
 }
 
 async function abrirEdicao(id){
@@ -275,13 +390,26 @@ async function abrirEdicao(id){
   abrirModal('edit');
 }
 
-function init(){
+async function init(){
+  try {
+    if (window.hfPermsReady) await window.hfPermsReady;
+    if (window.hfCanRead && !window.hfCanRead('eventos')) {
+      window.hfRenderNoPermission && window.hfRenderNoPermission({ modulo: 'eventos', title: 'Sem permissão', container: document.querySelector('main') });
+      return;
+    }
+  } catch {}
+
   // Guard against partial/legacy DOM variants. Never let one missing element break the whole page.
-  el('btnNova')?.addEventListener('click', () => abrirCriacao(null));
+  el('btnNova')?.addEventListener('click', (ev) => {
+    // btnNova is an <a> for fallback routing. When JS is alive, keep SPA-like modal.
+    ev.preventDefault();
+    abrirCriacao(null).catch(() => toast('Erro ao abrir criação de festa.'));
+  });
   el('btnCancelar')?.addEventListener('click', fecharModal);
   el('btnFecharModal')?.addEventListener('click', fecharModal);
-  el('modalBackdrop')?.addEventListener('click', fecharModal);
-  el('btnSalvarNova')?.addEventListener('click', salvarFesta);
+  el('btnSalvarNova')?.addEventListener('click', () => {
+    salvarFesta().catch(() => toast('Erro ao salvar festa.'));
+  });
 
   // Quick client creation
   el('btnQuickCliente')?.addEventListener('click', () => {
@@ -304,19 +432,21 @@ function init(){
     if(action === 'del') excluirFesta(id);
   });
 
+  ensureConvidadosOptions();
+
   // Boot
-  carregarFestas();
+  carregarFestas().catch(() => toast('Erro ao iniciar lista de festas.'));
 
   // Auto-open create modal when coming from dashboard/client drawer.
   // Examples:
-  //  /app/festas.html?action=create
   //  /app/festas?action=create
-  //  /app/festas.html?action=create&cliente_id=123
+  //  /app/festas?action=create
+  //  /app/festas?action=create&cliente_id=123
   try {
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'create') {
       const cid = params.get('cliente_id');
-      abrirCriacao(cid);
+      abrirCriacao(cid).catch(() => toast('Erro ao abrir criação de festa.'));
     }
   } catch {
     // no-op
@@ -324,7 +454,12 @@ function init(){
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => init().catch(() => toast('Erro ao iniciar a página.')));
 } else {
-  init();
+  init().catch(() => toast('Erro ao iniciar a página.'));
 }
+
+}
+
+if (window.hfInitPage) window.hfInitPage('festas', __hfInit_festas);
+else document.addEventListener('DOMContentLoaded', () => __hfInit_festas({ restore:false }), { once:true });

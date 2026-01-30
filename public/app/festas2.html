@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Festas | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css?v=20260128-234000">
+  <link rel="stylesheet" href="/css/festas.css?v=20260128-234000">
+  <script src="/permissions.js?v=20260128-234000" defer></script>
+  <script src="/shell.js?v=20260128-234000" defer></script>
+</head>
+<body class="layout">
+  
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <div class="nav-sep"></div>
+</nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+<div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+</div>
+  </aside>
+
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="title">Festas</h1>
+        <p class="muted">Lista de eventos e acesso à Central da Festa</p>
+      </div>
+      <!-- Fallback UX: even if JS fails, this link opens the create flow via querystring. -->
+      <a class="btn-primary" id="btnNova" href="/app/festas?action=create" data-perm="eventos:create">+ Nova festa</a>
+    </div>
+
+    <!-- Full-page create form (preferred UX). Page scrolls normally; no modal scrollbars. -->
+    <section class="card create-panel" id="createPanel" hidden>
+      <div class="create-head">
+        <div>
+          <h2 class="create-title" id="modalTitle">Nova Festa</h2>
+          <p class="muted">Selecione o cliente e preencha os dados básicos</p>
+        </div>
+        <button class="btn-ghost" id="btnFecharModal" type="button" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="create-body">
+        <div class="form-grid">
+          <label>
+            Cliente
+            <select id="cliente_id"></select>
+          </label>
+
+          <div class="span-2" style="display:flex;gap:10px;align-items:center;justify-content:flex-end;">
+            <button class="btn-ghost" id="btnQuickCliente" type="button" title="Criar cliente sem sair desta tela">+ Criar cliente rápido</button>
+          </div>
+
+          <div class="span-2" id="quickClienteBox" hidden>
+            <div class="card" style="padding:14px;border-radius:14px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div>
+                  <div style="font-weight:700;">Novo cliente</div>
+                  <div class="muted" style="font-size:12px;">Crie um cliente para vincular a esta festa.</div>
+                </div>
+                <button class="btn-ghost" id="btnCloseQuickCliente" type="button" aria-label="Fechar">✕</button>
+              </div>
+              <div class="form-grid" style="margin-top:10px;">
+                <label class="span-2">
+                  Nome do cliente
+                  <input id="qc_nome" placeholder="Ex: Renata" />
+                </label>
+                <label>
+                  Telefone
+                  <input id="qc_telefone" placeholder="Ex: (31) 99999-9999" />
+                </label>
+                <label>
+                  E-mail
+                  <input id="qc_email" placeholder="Ex: renata@email.com" />
+                </label>
+                <div class="span-2" style="margin-top:6px;">
+</div>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
+                <button class="btn-ghost" id="btnCancelQuickCliente" type="button">Cancelar</button>
+                <button class="btn-primary" id="btnSaveQuickCliente" type="button" data-perm="clientes:create">Salvar cliente</button>
+              </div>
+            </div>
+          </div>
+
+          <label>
+            Tipo de festa
+            <select id="tipo_evento">
+              <option value="Infantil">Infantil</option>
+              <option value="Adulto">Adulto</option>
+              <option value="Casamento">Casamento</option>
+              <option value="Corporativo">Corporativo</option>
+              <option value="Domiciliar">Domiciliar</option>
+              <option value="Coquetel">Coquetel</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+          <label>
+            Data
+            <input type="date" id="data_evento" />
+          </label>
+          <label>
+            Convidados
+            <select id="convidados">
+              <option value="">Selecione</option>
+              <option>10</option><option>20</option><option>30</option><option>40</option><option>50</option>
+              <option>60</option><option>70</option><option>80</option><option>90</option><option>100</option>
+              <option>110</option><option>120</option><option>130</option><option>140</option><option>150</option>
+              <option>160</option><option>170</option><option>180</option><option>190</option><option>200</option>
+              <option>210</option><option>220</option><option>230</option><option>240</option><option>250</option>
+              <option>260</option><option>270</option><option>280</option><option>290</option><option>300</option>
+              <option>310</option><option>320</option><option>330</option><option>340</option><option>350</option>
+              <option>360</option><option>370</option><option>380</option><option>390</option><option>400</option>
+              <option>410</option><option>420</option><option>430</option><option>440</option><option>450</option>
+              <option>460</option><option>470</option><option>480</option><option>490</option><option>500</option>
+            </select>
+          </label>
+          <label>
+            Valor total (R$)
+            <input type="number" id="valor_total" min="0" step="0.01" />
+          </label>
+          <label>
+            Status
+            <select id="status">
+              <option value="orcamento">Orçamento</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="fechado">Fechado</option>
+              <option value="em_producao">Em produção</option>
+              <option value="realizado">Realizado</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </label>
+          <label>
+            Contrato
+            <input type="text" id="contrato_numero" placeholder="(opcional) HF-AAAA-00000" />
+          </label>
+          <label class="span-2">
+            Forma de pagamento
+            <select id="forma_pagamento">
+              <option value="">—</option>
+              <option value="50% agora e 50% até 1 semana antes">50% agora e 50% até 1 semana antes</option>
+              <option value="À vista (desconto)">À vista (desconto)</option>
+              <option value="Cartão (até 6x)">Cartão (até 6x)</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="create-foot">
+        <button class="btn-ghost" id="btnCancelar" type="button">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarNova" type="button" data-perm="eventos:create">Criar festa</button>
+      </div>
+    </section>
+
+    <section class="card" id="listaFestasCard">
+      <div class="form-row">
+        <input id="busca" placeholder="Buscar por cliente, tipo ou contrato..." />
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="orcamento">Orçamento</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="fechado">Fechado</option>
+          <option value="em_producao">Em produção</option>
+          <option value="realizado">Realizado</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Convidados</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Contrato</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Legacy modal markup was replaced by a full-page panel.
+         Keep IDs (cliente_id, btnSalvarNova, etc.) stable for backward compatibility. -->
+
+  </main>
+  <script src="/js/festas.js?v=20260128-234000"></script>
+</body>
+</html>

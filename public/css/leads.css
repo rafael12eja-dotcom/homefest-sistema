@@ -359,6 +359,22 @@
   outline:none;
 }
 .block textarea{ min-height: 80px; resize: vertical; }
+
+/* Edit lead panel */
+.edit-lead{
+  margin-top: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.02);
+  border-radius: 14px;
+  padding: 14px;
+}
+.edit-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.edit-lead .form-grid{ margin-top: 8px; }
 @media (max-width: 920px){
   .kanban{ grid-template-columns: repeat(6, minmax(200px, 1fr)); }
   .drawer-grid{ grid-template-columns: 1fr; }

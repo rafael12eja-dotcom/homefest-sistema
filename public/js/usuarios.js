@@ -1,3 +1,6 @@
+function __hfInit_usuarios(ctx){
+function hfApplyPermissions(){ try { if (window.applyPermissionsToDOM) window.applyPermissionsToDOM(document); } catch {} }
+
 const tblBody = document.querySelector("#tbl tbody");
 const msg = document.getElementById("msg");
 const dlg = document.getElementById("dlg");
@@ -16,11 +19,21 @@ function setMsg(t, err=false){
 async function api(url, opts){
   const res = await fetch(url, {
     headers: { "content-type":"application/json", ...(opts?.headers||{}) },
+    credentials: "include",
     ...opts
   });
   let data = null;
   try{ data = await res.json(); }catch(_){}
   if(!res.ok){
+    // Robust auth UX
+    if (res.status === 401) {
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.replace(`/login.html?next=${next}`);
+      throw new Error('__AUTH_REDIRECT__');
+    }
+    if (res.status === 403) {
+      throw new Error("Acesso restrito. Apenas administradores.");
+    }
     throw new Error((data && data.message) ? data.message : ("Erro " + res.status));
   }
   return data;
@@ -58,12 +71,21 @@ function escapeHtml(s){
 }
 
 async function load(){
+  try {
+    if (window.hfPermsReady) await window.hfPermsReady;
+    if (window.hfCanRead && !window.hfCanRead('usuarios')) {
+      window.hfRenderNoPermission && window.hfRenderNoPermission({ modulo: 'usuarios', title: 'Sem permissão', container: document.querySelector('main') });
+      return;
+    }
+  } catch {}
   setMsg("Carregando...");
   try{
     const data = await api("/api/usuarios", { method:"GET", headers:{} });
     render(data.usuarios || []);
-    setMsg("");
+    if (data.warning) setMsg("Aviso: lista pode estar filtrando por empresa (tenant).", true);
+    else setMsg("");
   }catch(e){
+    if (e && e.message === '__AUTH_REDIRECT__') return;
     setMsg(e.message, true);
   }
 }
@@ -83,9 +105,15 @@ frm.addEventListener("submit", async (e) => {
     perfil: fd.get("perfil")
   };
   try{
-    await api("/api/usuarios", { method:"POST", body: JSON.stringify(payload) });
+    const resp = await api("/api/usuarios", { method:"POST", body: JSON.stringify(payload) });
     dlg.close();
+    // Prefer reloading from server; if server returns created row, we can render immediately too.
     await load();
+    if (resp && resp.usuario) {
+      // If list is still empty due to tenant mismatch, at least show the created user.
+      const current = Array.from(tblBody.querySelectorAll('tr')).length;
+      if (!current) render([resp.usuario]);
+    }
     setMsg("Usuário criado com sucesso.");
   }catch(err){
     setMsg(err.message, true);
@@ -126,4 +154,11 @@ frmReset.addEventListener("submit", async (e) => {
   }
 });
 
+hfApplyPermissions();
+
 load();
+
+}
+
+if (window.hfInitPage) window.hfInitPage('usuarios', __hfInit_usuarios);
+else document.addEventListener('DOMContentLoaded', () => __hfInit_usuarios({ restore:false }), { once:true });

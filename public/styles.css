@@ -46,6 +46,10 @@ a{ color:inherit; }
   border-right:1px solid var(--border);
   background: linear-gradient(180deg, rgba(15,23,42,.78), rgba(15,23,42,.55));
   backdrop-filter: blur(10px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+
 }
 
 .main{
@@ -81,15 +85,14 @@ a{ color:inherit; }
   width:44px;height:44px;
   border-radius:14px;
   display:grid;place-items:center;
-  background: linear-gradient(135deg, var(--accent), rgba(212,168,79,.35));
-  color:#0b1220;
-  font-weight:800;
-  letter-spacing:.5px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
 }
 .brand-name{ font-weight:800; }
 .brand-sub{ font-size:12px; color:var(--muted2); margin-top:2px; }
 
-.nav{ margin-top:6px; display:flex; flex-direction:column; gap:6px; }
+.nav{ margin-top:6px; display:flex; flex-direction:column; gap:6px; flex:1; overflow:auto; padding-bottom:12px; }
 .nav-item{
   all:unset;
   display:flex;
@@ -130,10 +133,7 @@ a{ color:inherit; }
   margin-top:14px;
   padding:10px;
   border-top:1px solid var(--border);
-  position:absolute;
-  bottom:16px;
-  left:14px;
-  right:14px;
+  position:static;
   display:flex;
   flex-direction:column;
   gap:8px;
@@ -428,3 +428,18 @@ a{ color:inherit; }
   .grid.two{ grid-template-columns: 1fr; }
   .grid.three{ grid-template-columns: 1fr; }
 }
+
+.sidebar-meta{ display:flex; justify-content:space-between; align-items:baseline; }
+
+
+.brand-logo{
+  width:100%;height:100%;
+  object-fit:contain;
+  padding:6px;
+}
+
+
+/* Shell embedded legacy module iframe */
+.embed-wrap{height: calc(100vh - 120px); min-height: 640px; border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); background: rgba(2,6,23,.25);}
+.embed-frame{width: 100%; height: 100%; border: 0; background: transparent;}
+@media (max-width: 900px){.embed-wrap{height: calc(100vh - 160px); min-height: 520px;}}

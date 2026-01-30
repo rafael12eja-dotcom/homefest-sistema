@@ -44,10 +44,9 @@ body{
   width:44px;height:44px;
   border-radius:14px;
   display:grid;place-items:center;
-  background: linear-gradient(135deg, var(--accent), rgba(212,168,79,.35));
-  color:#0b1220;
-  font-weight:900;
-  letter-spacing:.6px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
 }
 .name{font-weight:900}
 .sub{font-size:12px;color:rgba(229,231,235,.55);margin-top:2px}
@@ -93,3 +92,10 @@ input::placeholder{color:rgba(229,231,235,.45)}
   font-size:12px;
 }
 .dot{width:8px;height:8px;border-radius:99px;background:rgba(34,197,94,.75)}
+
+
+.brand-logo{
+  width:100%;height:100%;
+  object-fit:contain;
+  padding:6px;
+}

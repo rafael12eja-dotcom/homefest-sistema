@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Leads | Home Fest</title>
-  <link rel="stylesheet" href="/css/layout.css?v=20260125-015520">
-  <link rel="stylesheet" href="/css/leads.css?v=20260125-015520">
-  <script src="/shell.js?v=20260125-015520" defer></script>
+  <link rel="stylesheet" href="/css/layout.css?v=20260127-180000">
+  <link rel="stylesheet" href="/css/leads.css?v=20260127-180000">
+  <script src="/permissions.js?v=20260127-180000" defer></script>
+  <script src="/shell.js?v=20260127-180000" defer></script>
 </head>
 <body class="layout">
 
   
   <aside class="sidebar" aria-label="Navegação">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
       <div class="brand-text">
         <div class="brand-name">Home Fest</div>
         <div class="brand-sub">Sistema</div>
@@ -21,18 +22,18 @@
     </div>
 
     <nav class="nav">
-      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item is-active" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item is-active" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
       <div class="nav-sep"></div>
-      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
-    </nav>
+</nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-meta">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+<div class="sidebar-meta">
         <div class="meta-label">Versão</div>
         <div class="meta-value">0.1</div>
       </div>
-      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
-    </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+</div>
   </aside>
 
 
@@ -48,7 +49,7 @@
           <span class="search-ico">🔎</span>
           <input id="q" placeholder="Buscar por nome, telefone, origem..." autocomplete="off">
         </div>
-        <button class="btn-ghost" id="btnToggleNovo">+ Novo lead</button>
+        <button class="btn-ghost" id="btnToggleNovo" data-perm="leads:create">+ Novo lead</button>
       </div>
     </div>
 
@@ -94,7 +95,7 @@
 
       <div class="actions">
         <button class="btn-ghost" id="btnCancelarNovo">Cancelar</button>
-        <button class="btn-primary" id="btnSalvarLead">Salvar lead</button>
+        <button class="btn-primary" id="btnSalvarLead" data-perm="leads:create">Salvar lead</button>
       </div>
     </section>
 
@@ -181,14 +182,52 @@
               </label>
 
               <div class="quick">
-                <button class="btn-primary" id="btnConverter">Converter em Cliente + Festa</button>
+                <button class="btn-primary" id="btnConverter" data-perm="leads:update">Converter em Cliente + Festa</button>
+                <button class="btn-ghost" id="btnEditar" data-perm="leads:update">Editar lead</button>
                 <a class="btn-ghost" id="btnWhats" href="#" target="_blank" rel="noopener">WhatsApp</a>
-                <button class="btn-danger" id="btnExcluir">Excluir lead</button>
+                <button class="btn-danger" id="btnExcluir" data-perm="leads:delete">Excluir lead</button>
               </div>
 
               <div class="hint muted">Dica: você pode arrastar o card para mover de coluna.</div>
             </div>
           </div>
+
+          <!-- Edit lead (hidden by default) -->
+          <section class="edit-lead" id="editLead" hidden>
+            <div class="edit-head">
+              <h3>Editar lead</h3>
+              <span class="pill">dados</span>
+            </div>
+
+            <div class="form-grid">
+              <label>Nome
+                <input id="e_nome" placeholder="Nome completo" />
+              </label>
+              <label>Telefone
+                <input id="e_telefone" placeholder="(31) 9...." />
+              </label>
+              <label>Email
+                <input id="e_email" placeholder="email@exemplo.com" />
+              </label>
+              <label>Cidade
+                <input id="e_cidade" placeholder="Belo Horizonte" />
+              </label>
+              <label>Bairro
+                <input id="e_bairro" placeholder="Buritis" />
+              </label>
+              <label>Origem
+                <input id="e_origem" placeholder="WhatsApp, Instagram, Google..." />
+              </label>
+              <label class="span-2">Observações
+                <textarea id="e_observacoes" placeholder="Resumo do pedido, data provável, preferências..."></textarea>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="btn-ghost" id="btnCancelarEdit">Cancelar</button>
+              <button class="btn-primary" id="btnSalvarEdit" data-perm="leads:update">Salvar alterações</button>
+            </div>
+          </section>
 
           <div class="notes">
             <div class="notes-head">
@@ -200,7 +239,7 @@
               <textarea id="noteText" placeholder="Registrar contato, objeções, preferências..."></textarea>
               <div class="note-actions">
                 <button class="btn-ghost" id="btnNoteClear">Limpar</button>
-                <button class="btn-primary" id="btnAddNote">Salvar nota</button>
+                <button class="btn-primary" id="btnAddNote" data-perm="leads:update">Salvar nota</button>
               </div>
             </div>
 
@@ -288,6 +327,6 @@
     </div>
   </div>
 
-  <script src="/js/leads.js?v=20260125-015520"></script>
+  <script src="/js/leads.js?v=20260127-180000"></script>
 </body>
 </html>

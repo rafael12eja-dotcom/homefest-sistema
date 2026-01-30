@@ -1,13 +1,123 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Redirecionando…</title>
-  <meta http-equiv="refresh" content="0; url=/" />
-  <script>location.replace("/");</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard | Home Fest</title>
+  <link rel="stylesheet" href="/css/layout.css?v=20260125-203500">
+  <script src="/permissions.js?v=20260125-203500" defer></script>
+  <script src="/shell.js?v=20260125-203500" defer></script>
+  <script src="/js/dashboard.js?v=20260126-235500" defer></script>
 </head>
-<body>
-  <p>Redirecionando para o Dashboard…</p>
+<body class="layout">
+
+  <aside class="sidebar" aria-label="Navegação">
+    <div class="brand">
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
+      <div class="brand-text">
+        <div class="brand-name">Home Fest</div>
+        <div class="brand-sub">Sistema</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item is-active" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a>
+      <a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a>
+      <a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a>
+      <a class="nav-item" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a>
+      <a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a>
+      <a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a>
+      <div class="nav-sep"></div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+      <div class="sidebar-meta">
+        <div class="meta-label">Versão</div>
+        <div class="meta-value">0.1</div>
+      </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <h1>Dashboard</h1>
+
+    <div id="dashError" class="card" style="margin-top:14px; display:none;"></div>
+    <div id="dashLegacy" class="card" style="margin-top:14px; display:none;"></div>
+
+    <div class="grid-4" style="margin-top:14px;">
+      <div class="card kpi-card">
+        <div class="muted">Leads</div>
+        <div class="kpi-value" id="cardLeads">—</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="muted">Clientes</div>
+        <div class="kpi-value" id="cardClientes">—</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="muted">Festas</div>
+        <div class="kpi-value" id="cardFestas">—</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="muted">Saldo do Caixa</div>
+        <div class="kpi-value" id="cardCaixa">—</div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-head">
+          <h3>KPIs (30 dias)</h3>
+          <span class="pill">produção</span>
+        </div>
+
+        <div class="kpi-list" style="margin-top:10px;">
+          <div class="kpi-line"><span class="muted">Novos leads</span><strong id="kpiNovosLeads30d">—</strong></div>
+          <div class="kpi-line"><span class="muted">Taxa de conversão</span><strong id="kpiTaxaConversao">—</strong></div>
+          <div class="kpi-line"><span class="muted">Receita prevista</span><strong id="kpiReceitaPrevista">—</strong></div>
+          <div class="kpi-line"><span class="muted">Receita realizada</span><strong id="kpiReceitaRealizada">—</strong></div>
+          <div class="kpi-line"><span class="muted">Saldo do caixa</span><strong id="kpiSaldoCaixa">—</strong></div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+          <a class="btn-primary" href="/app/leads" data-perm="leads:read">Abrir Leads</a>
+          <a class="btn-secondary" href="/app/festas" data-perm="eventos:read">Ver Festas</a>
+          <a class="btn-secondary" href="/app/financeiro" data-perm="financeiro:read">Ir para Financeiro</a>
+        </div>
+
+        <p class="muted" style="margin-top:12px;">
+          Dashboard sem SPA frágil: KPIs carregam via /api/dashboard e são renderizados com HTML estável.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Eventos por status</h3>
+          <span class="pill">RBAC</span>
+        </div>
+        <div id="statusBars" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Próximas festas</h3>
+          <span class="pill">agenda</span>
+        </div>
+        <div style="overflow:auto; margin-top:10px;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Cliente</th><th>Tipo</th><th>Data</th><th style="text-align:right;">Convid.</th>
+                <th style="text-align:right;">Valor</th><th>Status</th><th style="text-align:right;">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tblProximasBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</main>
+
 </body>
 </html>

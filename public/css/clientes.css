@@ -191,3 +191,7 @@ th, td{ padding: 10px 12px; font-size: 14px; border: 1px solid rgba(255,255,255,
   .form-grid{ grid-template-columns: 1fr; }
   .span-2{ grid-column: span 1; }
 }
+
+
+/* Row action buttons in list */
+.row-actions{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }

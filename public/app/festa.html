@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Central da Festa | Home Fest</title>
-  <link rel="stylesheet" href="/css/layout.css?v=20260125-015520">
-  <link rel="stylesheet" href="/css/festa.css?v=20260125-015520">
-  <script src="/shell.js?v=20260125-015520" defer></script>
+  <link rel="stylesheet" href="/css/layout.css?v=20260128-120000">
+  <link rel="stylesheet" href="/css/festa.css?v=20260128-120000">
+  <script src="/permissions.js?v=20260128-120000" defer></script>
+  <script src="/shell.js?v=20260128-120000" defer></script>
 </head>
 <body class="layout">
 
   
   <aside class="sidebar" aria-label="Navegação">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
       <div class="brand-text">
         <div class="brand-name">Home Fest</div>
         <div class="brand-sub">Sistema</div>
@@ -21,18 +22,18 @@
     </div>
 
     <nav class="nav">
-      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
       <div class="nav-sep"></div>
-      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
-    </nav>
+</nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-meta">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+<div class="sidebar-meta">
         <div class="meta-label">Versão</div>
         <div class="meta-value">0.1</div>
       </div>
-      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
-    </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+</div>
   </aside>
 
 
@@ -43,9 +44,9 @@
         <p class="muted" id="subtitulo">Carregando…</p>
       </div>
       <div class="top-actions">
-        <a class="btn-ghost" href="/app/festas.html">← Voltar</a>
-        <button class="btn-ghost" id="btnEditarEvento" title="Editar dados da festa">Editar festa</button>
-        <button class="btn-primary" id="btnSalvar">Salvar</button>
+        <a class="btn-ghost" href="/app/festas" data-perm="eventos:read">← Voltar</a>
+        <button class="btn-ghost" id="btnEditarEvento" title="Editar dados da festa" data-perm="eventos:update">Editar festa</button>
+        <button class="btn-primary" id="btnSalvar" data-perm="eventos:update">Salvar</button>
       </div>
     </div>
 
@@ -148,7 +149,52 @@
     </div>
 
     <section class="card">
-      <div class="tabs">
+      
+    <!-- Phase 3.5 — Resumo Financeiro (additive, no layout breaking) -->
+    <section class="card" style="margin-top:14px;" data-perm="financeiro:read">
+      <h3 style="margin:0 0 8px;">Resumo Financeiro</h3>
+      <p class="muted" style="margin:0 0 10px;" id="finResumoHint">Carregando…</p>
+
+      <div class="grid-3" id="finResumoCards">
+        <div class="card">
+          <div class="kpi-label">💰 Total Revenue</div>
+          <div class="kpi-value" id="finReceita">—</div>
+          <div class="kpi-label" style="margin-top:6px;" id="finReceitaBase">—</div>
+        </div>
+
+        <div class="card">
+          <div class="kpi-label">💸 Total Expenses</div>
+          <div class="kpi-value" id="finDespesas">—</div>
+          <div class="kpi-label" style="margin-top:6px;">(Caixa)</div>
+        </div>
+
+        <div class="card">
+          <div class="kpi-label">👥 Team Cost</div>
+          <div class="kpi-value" id="finEquipe">—</div>
+          <div class="kpi-label" style="margin-top:6px;">(categoria equipe)</div>
+        </div>
+
+        <div class="card">
+          <div class="kpi-label">📦 Operational Cost</div>
+          <div class="kpi-value" id="finOperacional">—</div>
+          <div class="kpi-label" style="margin-top:6px;">(demais despesas)</div>
+        </div>
+
+        <div class="card">
+          <div class="kpi-label">📈 Profit</div>
+          <div class="kpi-value" id="finLucro">—</div>
+          <div class="kpi-label" style="margin-top:6px;" id="finLucroHint">—</div>
+        </div>
+
+        <div class="card">
+          <div class="kpi-label">📊 Margin %</div>
+          <div class="kpi-value" id="finMargem">—</div>
+          <div class="kpi-label" style="margin-top:6px;" id="finPagamentos">—</div>
+        </div>
+      </div>
+    </section>
+
+<div class="tabs">
         <button class="tab active" data-tab="equipe">Equipe</button>
         <button class="tab" data-tab="bebidas">Bebidas</button>
         <button class="tab" data-tab="doces">Doces</button>
@@ -156,6 +202,7 @@
         <button class="tab" data-tab="decoracao">Decoração</button>
         <button class="tab" data-tab="estrutura">Estrutura</button>
         <button class="tab" data-tab="proposta">Proposta</button>
+        <button class="tab" data-tab="contrato">Contrato</button>
         <button class="tab" data-tab="pagamento">Pagamento</button>
       </div>
 
@@ -173,7 +220,7 @@
               <div class="pill" title="Custo total da equipe nesta festa">
                 Total: <strong id="equipeTotal">R$ 0,00</strong>
               </div>
-              <button class="btn-primary" id="btnEquipeNovo">+ Adicionar</button>
+              <button class="btn-primary" id="btnEquipeNovo" data-perm="eventos:update">+ Adicionar</button>
             </div>
           </div>
 
@@ -202,37 +249,175 @@
           </div>
         </div>
 
-        <!-- PLACEHOLDERS -->
+        <!-- ITENS DO EVENTO (usa /api/eventos-itens) -->
         <div class="module" data-module="bebidas" hidden>
-          <div class="empty">
-            <div class="empty-title">Bebidas (em breve)</div>
-            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          <div class="card pad">
+            <div class="module-head">
+              <div>
+                <div class="module-title">Bebidas</div>
+                <div class="module-sub">Cadastre os itens e acompanhe o custo em tempo real.</div>
+              </div>
+              <div class="module-actions">
+                <div class="pill">Total: <strong id="bebidasTotal">R$ 0,00</strong></div>
+                <button class="btn-primary" id="btnBebidasNovo" data-perm="eventos:update">+ Adicionar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Fornecedor</th>
+                    <th class="num" style="width:90px;">Qtd</th>
+                    <th style="width:110px;">Unid.</th>
+                    <th class="num" style="width:120px;">R$ Unit.</th>
+                    <th class="num" style="width:120px;">R$ Total</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:140px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="bebidasTbody"></tbody>
+              </table>
+            </div>
+
+            <div class="hint" style="margin-top:12px;">Dica: use <strong>evento</strong> para orçamento fechado e <strong>unidade</strong> para consumo por item.</div>
           </div>
         </div>
+
         <div class="module" data-module="doces" hidden>
-          <div class="empty">
-            <div class="empty-title">Doces (em breve)</div>
-            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          <div class="card pad">
+            <div class="module-head">
+              <div>
+                <div class="module-title">Doces</div>
+                <div class="module-sub">Cadastre os itens e acompanhe o custo em tempo real.</div>
+              </div>
+              <div class="module-actions">
+                <div class="pill">Total: <strong id="docesTotal">R$ 0,00</strong></div>
+                <button class="btn-primary" id="btnDocesNovo" data-perm="eventos:update">+ Adicionar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Fornecedor</th>
+                    <th class="num" style="width:90px;">Qtd</th>
+                    <th style="width:110px;">Unid.</th>
+                    <th class="num" style="width:120px;">R$ Unit.</th>
+                    <th class="num" style="width:120px;">R$ Total</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:140px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="docesTbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
         <div class="module" data-module="salgados" hidden>
-          <div class="empty">
-            <div class="empty-title">Salgados (em breve)</div>
-            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          <div class="card pad">
+            <div class="module-head">
+              <div>
+                <div class="module-title">Salgados</div>
+                <div class="module-sub">Cadastre os itens e acompanhe o custo em tempo real.</div>
+              </div>
+              <div class="module-actions">
+                <div class="pill">Total: <strong id="salgadosTotal">R$ 0,00</strong></div>
+                <button class="btn-primary" id="btnSalgadosNovo" data-perm="eventos:update">+ Adicionar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Fornecedor</th>
+                    <th class="num" style="width:90px;">Qtd</th>
+                    <th style="width:110px;">Unid.</th>
+                    <th class="num" style="width:120px;">R$ Unit.</th>
+                    <th class="num" style="width:120px;">R$ Total</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:140px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="salgadosTbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
         <div class="module" data-module="decoracao" hidden>
-          <div class="empty">
-            <div class="empty-title">Decoração (em breve)</div>
-            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          <div class="card pad">
+            <div class="module-head">
+              <div>
+                <div class="module-title">Decoração</div>
+                <div class="module-sub">Cadastre os itens e acompanhe o custo em tempo real.</div>
+              </div>
+              <div class="module-actions">
+                <div class="pill">Total: <strong id="decoracaoTotal">R$ 0,00</strong></div>
+                <button class="btn-primary" id="btnDecoracaoNovo" data-perm="eventos:update">+ Adicionar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Fornecedor</th>
+                    <th class="num" style="width:90px;">Qtd</th>
+                    <th style="width:110px;">Unid.</th>
+                    <th class="num" style="width:120px;">R$ Unit.</th>
+                    <th class="num" style="width:120px;">R$ Total</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:140px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="decoracaoTbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
         <div class="module" data-module="estrutura" hidden>
-          <div class="empty">
-            <div class="empty-title">Estrutura (em breve)</div>
-            <div class="empty-text">Vamos implementar este módulo seguindo o mesmo padrão do ERP (evento_itens).</div>
+          <div class="card pad">
+            <div class="module-head">
+              <div>
+                <div class="module-title">Estrutura</div>
+                <div class="module-sub">Cadastre os itens e acompanhe o custo em tempo real.</div>
+              </div>
+              <div class="module-actions">
+                <div class="pill">Total: <strong id="estruturaTotal">R$ 0,00</strong></div>
+                <button class="btn-primary" id="btnEstruturaNovo" data-perm="eventos:update">+ Adicionar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Fornecedor</th>
+                    <th class="num" style="width:90px;">Qtd</th>
+                    <th style="width:110px;">Unid.</th>
+                    <th class="num" style="width:120px;">R$ Unit.</th>
+                    <th class="num" style="width:120px;">R$ Total</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:140px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="estruturaTbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        <!-- Demais módulos seguem abaixo -->
         <div class="module" data-module="proposta" hidden>
           <div class="module-head">
             <div>
@@ -240,9 +425,9 @@
               <div class="module-sub">Monte a proposta (itens + condições) e gere versões para o cliente.</div>
             </div>
             <div class="module-actions">
-              <button class="btn-ghost" id="btnPropAdicionar">+ Item</button>
-              <button class="btn-primary" id="btnPropSalvar">Salvar nova versão</button>
-              <a class="btn-ghost" id="btnPropImprimirUltima" href="#" target="_blank" rel="noopener">Imprimir última</a>
+              <button class="btn-ghost" id="btnPropAdicionar" data-perm="propostas:create">+ Item</button>
+              <button class="btn-primary" id="btnPropSalvar" data-perm="propostas:create">Salvar nova versão</button>
+              <a class="btn-ghost" id="btnPropImprimirUltima" href="#" target="_blank" rel="noopener" data-perm="propostas:read">Imprimir última</a>
             </div>
           </div>
 
@@ -311,12 +496,52 @@
                     <th style="width:80px;">Versão</th>
                     <th>Título</th>
                     <th style="width:160px;">Criada em</th>
-                    <th style="width:160px;">Ações</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:240px;">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="propVersoes"></tbody>
               </table>
               <div class="empty-text" id="propVersoesEmpty">Nenhuma proposta gerada ainda.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="module" data-module="contrato" hidden>
+          <div class="module-head">
+            <div>
+              <div class="module-title">Contrato</div>
+              <div class="module-sub">Gere o contrato a partir de uma proposta ACEITA e envie um link de aceite.</div>
+            </div>
+            <div class="module-actions">
+              <button class="btn-primary" id="btnContratoGerar" data-perm="contratos:create">Gerar contrato da proposta aceita</button>
+              <button class="btn-ghost" id="btnContratoGerarLink" data-perm="contratos:update">Gerar link de aceite</button>
+              <a class="btn-ghost" id="btnContratoAbrir" href="#" target="_blank" rel="noopener" data-perm="contratos:read">Abrir contrato</a>
+            </div>
+          </div>
+
+          <div class="card pad" style="margin-top:14px;">
+            <div class="module-title" style="font-size:16px;">Contratos do evento</div>
+            <div class="module-sub" style="margin-top:4px;">Cada contrato possui versões imutáveis (v1, v2...).</div>
+
+            <div class="table-wrap" style="margin-top:12px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:90px;">Contrato</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:120px;">Versão</th>
+                    <th style="width:160px;">Criado em</th>
+                    <th style="width:240px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="ctrRows"></tbody>
+              </table>
+              <div class="empty-text" id="ctrEmpty">Nenhum contrato gerado ainda.</div>
+            </div>
+
+            <div class="hint" style="margin-top:12px;">
+              Recomendação: primeiro marque uma proposta como <strong>ACEITA</strong>. Depois gere o contrato e envie o link de aceite.
             </div>
           </div>
         </div>
@@ -410,7 +635,78 @@
 
           <div class="modal-actions">
             <button class="btn-ghost" id="btnEquipeCancelar" data-close="1">Cancelar</button>
-            <button class="btn-primary" id="btnEquipeSalvar">Salvar</button>
+            <button class="btn-primary" id="btnEquipeSalvar" data-perm="eventos:update">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL ITEM (Bebidas/Doces/Salgados/Decoração/Estrutura) -->
+      <div class="modal" id="modalItem" hidden>
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalItemTitle">
+          <div class="modal-head">
+            <div>
+              <div class="modal-title" id="modalItemTitle">Adicionar item</div>
+              <div class="modal-sub">Preencha os campos abaixo. O total pode ser calculado automaticamente.</div>
+            </div>
+            <button class="icon-btn" id="btnItemFechar" aria-label="Fechar">✕</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label>Categoria</label>
+              <input id="itCategoria" disabled />
+            </div>
+
+            <div class="field">
+              <label>Item</label>
+              <input id="itItem" placeholder="Ex: Refrigerante / Brigadeiro / Mesa / Arranjo..." />
+            </div>
+
+            <div class="field">
+              <label>Fornecedor</label>
+              <input id="itFornecedor" placeholder="Ex: próprio / fornecedor X" />
+            </div>
+
+            <div class="field">
+              <label>Status</label>
+              <select id="itStatus">
+                <option value="pendente">pendente</option>
+                <option value="confirmado">confirmado</option>
+                <option value="pago">pago</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Quantidade</label>
+              <input id="itQtd" type="number" min="0" step="1" value="1" />
+            </div>
+
+            <div class="field">
+              <label>Unidade</label>
+              <input id="itUnid" placeholder="Ex: un / pacote / kg / evento" />
+            </div>
+
+            <div class="field">
+              <label>Valor unitário</label>
+              <input id="itVUnit" inputmode="decimal" placeholder="0,00" />
+            </div>
+
+            <div class="field">
+              <label>Valor total</label>
+              <input id="itVTotal" inputmode="decimal" placeholder="0,00" />
+              <div class="micro">Se deixar vazio, o sistema calcula: quantidade × unitário.</div>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Observação</label>
+              <input id="itObs" placeholder="Detalhes do item (ex: sabores, tamanhos, horários, etc)" />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-ghost" id="btnItemCancelar" data-close="1">Cancelar</button>
+            <button class="btn-primary" id="btnItemSalvar" data-perm="eventos:update">Salvar</button>
           </div>
         </div>
       </div>
@@ -497,13 +793,13 @@
 
         <div class="modal-actions">
           <button class="btn-ghost" data-close="1">Cancelar</button>
-          <button class="btn-primary" id="btnEventoSalvar">Salvar alterações</button>
+          <button class="btn-primary" id="btnEventoSalvar" data-perm="eventos:update">Salvar alterações</button>
         </div>
       </div>
     </div>
 
   </main>
 
-  <script src="/js/festa.js?v=20260125-015520"></script>
+  <script src="/js/festa.js?v=20260128-120000"></script>
 </body>
 </html>

@@ -4,15 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Festas | Home Fest</title>
-  <link rel="stylesheet" href="/css/layout.css?v=20260125-015520">
-  <link rel="stylesheet" href="/css/festas.css?v=20260125-015520">
-  <script src="/shell.js?v=20260125-015520" defer></script>
+  <link rel="stylesheet" href="/css/layout.css?v=20260128-120000">
+  <link rel="stylesheet" href="/css/festas.css?v=20260128-120000">
+  <script src="/permissions.js?v=20260128-120000" defer></script>
+  <script src="/shell.js?v=20260128-120000" defer></script>
 </head>
 <body class="layout">
   
   <aside class="sidebar" aria-label="Navegação">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
       <div class="brand-text">
         <div class="brand-name">Home Fest</div>
         <div class="brand-sub">Sistema</div>
@@ -20,18 +21,18 @@
     </div>
 
     <nav class="nav">
-      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item is-active" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
       <div class="nav-sep"></div>
-      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
-    </nav>
+</nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-meta">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+<div class="sidebar-meta">
         <div class="meta-label">Versão</div>
         <div class="meta-value">0.1</div>
       </div>
-      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
-    </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+</div>
   </aside>
 
 
@@ -41,55 +42,21 @@
         <h1 class="title">Festas</h1>
         <p class="muted">Lista de eventos e acesso à Central da Festa</p>
       </div>
-      <button class="btn-primary" id="btnNova">+ Nova festa</button>
+      <!-- Fallback UX: even if JS fails, this link opens the create flow via querystring. -->
+      <a class="btn-primary" id="btnNova" href="/app/festas?action=create" data-perm="eventos:create">+ Nova festa</a>
     </div>
 
-    <section class="card">
-      <div class="form-row">
-        <input id="busca" placeholder="Buscar por cliente, tipo ou contrato..." />
-        <select id="filtroStatus">
-          <option value="">Todos os status</option>
-          <option value="orcamento">Orçamento</option>
-          <option value="confirmado">Confirmado</option>
-          <option value="fechado">Fechado</option>
-          <option value="em_producao">Em produção</option>
-          <option value="realizado">Realizado</option>
-          <option value="finalizado">Finalizado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-      </div>
-
-      <div class="table-wrap">
-        <table class="table" id="tbl">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Cliente</th>
-              <th>Tipo</th>
-              <th>Data</th>
-              <th>Convidados</th>
-              <th>Valor</th>
-              <th>Status</th>
-              <th>Contrato</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <div class="modal-backdrop" id="modalBackdrop" hidden></div>
-    <div class="modal" id="modalNova" hidden>
-      <div class="modal-head">
+    <!-- Full-page create form (preferred UX). Page scrolls normally; no modal scrollbars. -->
+    <section class="card create-panel" id="createPanel" hidden>
+      <div class="create-head">
         <div>
-          <h3 id="modalTitle">Nova Festa</h3>
+          <h2 class="create-title" id="modalTitle">Nova Festa</h2>
           <p class="muted">Selecione o cliente e preencha os dados básicos</p>
         </div>
-        <button class="btn-ghost" id="btnFecharModal">✕</button>
+        <button class="btn-ghost" id="btnFecharModal" type="button" aria-label="Fechar">✕</button>
       </div>
 
-      <div class="modal-body">
+      <div class="create-body">
         <div class="form-grid">
           <label>
             Cliente
@@ -110,7 +77,7 @@
                 <button class="btn-ghost" id="btnCloseQuickCliente" type="button" aria-label="Fechar">✕</button>
               </div>
               <div class="form-grid" style="margin-top:10px;">
-                <label>
+                <label class="span-2">
                   Nome do cliente
                   <input id="qc_nome" placeholder="Ex: Renata" />
                 </label>
@@ -118,13 +85,18 @@
                   Telefone
                   <input id="qc_telefone" placeholder="Ex: (31) 99999-9999" />
                 </label>
+                <label>
+                  E-mail
+                  <input id="qc_email" placeholder="Ex: renata@email.com" />
+                </label>
               </div>
               <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
                 <button class="btn-ghost" id="btnCancelQuickCliente" type="button">Cancelar</button>
-                <button class="btn-primary" id="btnSaveQuickCliente" type="button">Salvar cliente</button>
+                <button class="btn-primary" id="btnSaveQuickCliente" type="button" data-perm="clientes:create">Salvar cliente</button>
               </div>
             </div>
           </div>
+
           <label>
             Tipo de festa
             <select id="tipo_evento">
@@ -143,7 +115,7 @@
           </label>
           <label>
             Convidados
-            <input type="number" id="convidados" min="0" />
+            <select id="convidados"></select>
           </label>
           <label>
             Valor total (R$)
@@ -178,13 +150,51 @@
         </div>
       </div>
 
-      <div class="modal-foot">
-        <button class="btn-ghost" id="btnCancelar">Cancelar</button>
-        <button class="btn-primary" id="btnSalvarNova">Salvar</button>
+      <div class="create-foot">
+        <button class="btn-ghost" id="btnCancelar" type="button">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarNova" type="button" data-perm="eventos:create">Criar festa</button>
       </div>
-    </div>
+    </section>
+
+    <section class="card" id="listaFestasCard">
+      <div class="form-row">
+        <input id="busca" placeholder="Buscar por cliente, tipo ou contrato..." />
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="orcamento">Orçamento</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="fechado">Fechado</option>
+          <option value="em_producao">Em produção</option>
+          <option value="realizado">Realizado</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Convidados</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Contrato</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Legacy modal markup was replaced by a full-page panel.
+         Keep IDs (cliente_id, btnSalvarNova, etc.) stable for backward compatibility. -->
 
   </main>
-  <script src="/js/festas.js?v=20260125-015520"></script>
+  <script src="/js/festas.js?v=20260128-120000"></script>
 </body>
 </html>

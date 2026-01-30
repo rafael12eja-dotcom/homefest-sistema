@@ -4,14 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Financeiro | Home Fest</title>
-  <link rel="stylesheet" href="/css/layout.css?v=20260125-015520">
-  <script src="/shell.js?v=20260125-015520" defer></script>
+  <link rel="stylesheet" href="/css/layout.css?v=20260125-203500">
+  <link rel="stylesheet" href="/css/financeiro.css?v=20260125-203500">
+  <script src="/permissions.js?v=20260125-203500" defer></script>
+  <script src="/shell.js?v=20260125-203500" defer></script>
+  <script src="/js/financeiro.js?v=20260125-203500" defer></script>
 </head>
 <body class="layout">
   
   <aside class="sidebar" aria-label="Navegação">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">HF</div>
+      <div class="brand-mark"><img class="brand-logo" src="/assets/logo.png" alt="Home Fest & Eventos" /></div>
       <div class="brand-text">
         <div class="brand-name">Home Fest</div>
         <div class="brand-sub">Sistema</div>
@@ -19,27 +22,24 @@
     </div>
 
     <nav class="nav">
-      <a class="nav-item" href="/"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads.html"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes.html"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas.html"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item is-active" href="/app/financeiro.html"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios.html"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
+      <a class="nav-item" href="/app/dashboard" data-perm="dashboard:read"><span class="nav-ico">🏠</span><span>Dashboard</span></a><a class="nav-item" href="/app/leads" data-perm="leads:read"><span class="nav-ico">🧲</span><span>Leads</span></a><a class="nav-item" href="/app/clientes" data-perm="clientes:read"><span class="nav-ico">👥</span><span>Clientes</span></a><a class="nav-item" href="/app/festas" data-perm="eventos:read"><span class="nav-ico">🎉</span><span>Festas</span></a><a class="nav-item is-active" href="/app/financeiro" data-perm="financeiro:read"><span class="nav-ico">💰</span><span>Financeiro</span></a><a class="nav-item" href="/app/usuarios" data-perm="usuarios:read"><span class="nav-ico">🛡️</span><span>Usuários</span></a><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📄</span><span>Contratos</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">🏷️</span><span>Patrimônio</span></button><button class="nav-item" type="button" disabled title="Em desenvolvimento"><span class="nav-ico">📊</span><span>Relatórios</span></button>
       <div class="nav-sep"></div>
-      <a class="nav-item" id="btnLogout" href="#"><span class="nav-ico">🚪</span><span>Sair</span></a>
-    </nav>
+</nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-meta">
+      <a class="nav-item" id="btnLogout" href="#" title="Sair"><span class="nav-ico">🚪</span><span>Sair</span></a>
+<div class="sidebar-meta">
         <div class="meta-label">Versão</div>
         <div class="meta-value">0.1</div>
       </div>
-      <a class="settings-link" href="#" title="Em desenvolvimento" aria-disabled="true">⚙ Configurações</a>
-    </div>
+      <a class="settings-link" href="/app/permissoes" data-perm="permissoes:read">⚙ Configurações</a>
+</div>
   </aside>
 
 
   <main class="main">
     <h1>Financeiro</h1>
-    <div class="card">
-      <p class="muted">Em construção. Próximo módulo após as abas da Central da Festa.</p>
-      <p>API já existe em <code>/api/financeiro</code>.</p>
-    </div>
+    <div id="financeiroRoot"></div>
   </main>
 </body>
 </html>

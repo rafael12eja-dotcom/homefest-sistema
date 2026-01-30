@@ -1,3 +1,5 @@
+function hfApplyPermissions(){ try { if (window.applyPermissionsToDOM) window.applyPermissionsToDOM(document); } catch {} }
+
 // public/js/leads.js
 // Leads pipeline (kanban) + notes + conversion flow.
 // Code/comments in English per project standard.
@@ -46,16 +48,12 @@ function buildWhatsAppLink(phone, name) {
   return `https://wa.me/55${digits}?text=${encodeURIComponent(msg)}`;
 }
 
-async function apiJson(url, opts = {}) {
-  const res = await fetch(url, opts);
-  const ct = res.headers.get('content-type') || '';
-  const isJson = ct.includes('application/json');
-  const data = isJson ? await res.json() : await res.text();
-  if (!res.ok) {
-    const msg = isJson ? (data.message || JSON.stringify(data)) : String(data);
-    throw new Error(msg || `HTTP ${res.status}`);
-  }
-  return data;
+async function window.hfApiJson(url, opts = {}) {
+  // Delegates to the shared shell helper:
+  // - credentials: include
+  // - 401 redirects
+  // - 403 shows toast
+  return window.hfApiJson(url, opts);
 }
 
 function applyFilter() {
@@ -160,7 +158,7 @@ function wireKanbanDnD() {
 }
 
 async function loadLeads() {
-  state.leads = await apiJson('/api/leads');
+  state.leads = await window.hfApiJson('/api/leads');
   renderKanban();
 }
 
@@ -176,7 +174,7 @@ async function createLead() {
     observacoes: el('observacoes').value,
   };
 
-  await apiJson('/api/leads', {
+  await window.hfApiJson('/api/leads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -187,6 +185,7 @@ async function createLead() {
   el('status').value = 'novo';
   closeNovoLead();
   await loadLeads();
+  hfApplyPermissions();
 }
 
 async function updateLeadStatus(id, status) {
@@ -198,7 +197,7 @@ async function updateLeadStatus(id, status) {
   renderKanban();
 
   try {
-    await apiJson('/api/leads/' + id, {
+    await window.hfApiJson('/api/leads/' + id, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
@@ -241,6 +240,9 @@ function openDrawerByLead(lead) {
   el('btnConverter').disabled = (lead.status === 'fechado');
   el('btnConverter').title = (lead.status === 'fechado') ? 'Lead já está fechado' : '';
 
+  // Hide edit panel by default
+  try { el('editLead').hidden = true; } catch {}
+
   const drawer = el('drawer');
   drawer.classList.remove('hidden');
   drawer.setAttribute('aria-hidden', 'false');
@@ -248,6 +250,62 @@ function openDrawerByLead(lead) {
   loadNotes(lead.id).catch(() => {
     el('notesList').innerHTML = '<div class="muted">Não foi possível carregar o histórico.</div>';
   });
+}
+
+function openEditLead() {
+  const lead = state.selectedLead;
+  if (!lead) return;
+
+  // Pre-fill form
+  el('e_nome').value = lead.nome || '';
+  el('e_telefone').value = lead.telefone || '';
+  el('e_email').value = lead.email || '';
+  el('e_cidade').value = lead.cidade || '';
+  el('e_bairro').value = lead.bairro || '';
+  el('e_origem').value = lead.origem || '';
+  el('e_observacoes').value = lead.observacoes || '';
+
+  el('editLead').hidden = false;
+  el('e_nome').focus();
+  hfApplyPermissions();
+}
+
+function cancelEditLead() {
+  try { el('editLead').hidden = true; } catch {}
+}
+
+async function saveEditLead() {
+  const lead = state.selectedLead;
+  if (!lead) return;
+
+  const payload = {
+    nome: el('e_nome').value,
+    telefone: el('e_telefone').value,
+    email: el('e_email').value,
+    cidade: el('e_cidade').value,
+    bairro: el('e_bairro').value,
+    origem: el('e_origem').value,
+    observacoes: el('e_observacoes').value,
+  };
+
+  await window.hfApiJson('/api/leads/' + lead.id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  // Update local state
+  Object.assign(lead, payload);
+  // Update drawer display fields
+  el('d_nome').textContent = lead.nome || 'Lead';
+  el('d_tel').textContent = lead.telefone || '—';
+  el('d_email').textContent = lead.email || '—';
+  el('d_local').textContent = `${lead.cidade || '—'}${lead.bairro ? ' · ' + lead.bairro : ''}`;
+  el('d_origem').textContent = lead.origem || '—';
+
+  cancelEditLead();
+  renderKanban();
+  hfApplyPermissions();
 }
 
 async function openDrawer(id) {
@@ -266,7 +324,7 @@ function closeDrawer() {
 }
 
 async function loadNotes(leadId) {
-  const notes = await apiJson('/api/leads/' + leadId + '/notes');
+  const notes = await window.hfApiJson('/api/leads/' + leadId + '/notes');
   const list = el('notesList');
   if (!notes.length) {
     list.innerHTML = '<div class="muted">Nenhuma nota ainda. Registre o primeiro contato!</div>';
@@ -286,7 +344,7 @@ async function addNote() {
   const note = (el('noteText').value || '').trim();
   if (!note) return;
 
-  await apiJson('/api/leads/' + lead.id + '/notes', {
+  await window.hfApiJson('/api/leads/' + lead.id + '/notes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ note }),
@@ -309,9 +367,10 @@ async function deleteSelectedLead() {
   const ok = confirm(`Excluir lead "${lead.nome}"?`);
   if (!ok) return;
 
-  await apiJson('/api/leads/' + lead.id, { method: 'DELETE' });
+  await window.hfApiJson('/api/leads/' + lead.id, { method: 'DELETE' });
   closeDrawer();
   await loadLeads();
+  hfApplyPermissions();
 }
 
 function abrirModalConverter() {
@@ -355,7 +414,7 @@ async function confirmarFechamento() {
     observacoes: el('m_obs').value || null,
   };
 
-  const out = await apiJson('/api/leads/' + leadSelecionadoId + '/converter', {
+  const out = await window.hfApiJson('/api/leads/' + leadSelecionadoId + '/converter', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -363,9 +422,10 @@ async function confirmarFechamento() {
 
   fecharModal();
   await loadLeads();
+  hfApplyPermissions();
 
   // Go straight to the event central to keep the flow tight
-  window.location.href = '/app/festa.html?id=' + out.evento_id;
+  window.location.href = '/app/festa?id=' + out.evento_id;
 }
 
 function wireUI() {
@@ -388,14 +448,35 @@ function wireUI() {
 
   el('btnExcluir').addEventListener('click', deleteSelectedLead);
   el('btnConverter').addEventListener('click', abrirModalConverter);
+  el('btnEditar').addEventListener('click', openEditLead);
+  el('btnCancelarEdit').addEventListener('click', cancelEditLead);
+  el('btnSalvarEdit').addEventListener('click', saveEditLead);
+  el('btnEditar').addEventListener('click', openEditLead);
+  el('btnCancelarEdit').addEventListener('click', cancelEditLead);
+  el('btnSalvarEdit').addEventListener('click', saveEditLead);
 
   // Expose modal functions for HTML buttons
   window.fecharModal = fecharModal;
   window.confirmarFechamento = confirmarFechamento;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+
+function __hfInit_leads(ctx){
+
+  try {
+    if (window.hfPermsReady) await window.hfPermsReady;
+    if (window.hfCanRead && !window.hfCanRead('leads')) {
+      window.hfRenderNoPermission && window.hfRenderNoPermission({ modulo: 'leads', title: 'Sem permissão', container: document.querySelector('main') });
+      return;
+    }
+  } catch {}
   wireUI();
+  hfApplyPermissions();
   wireKanbanDnD();
   await loadLeads();
-});
+  hfApplyPermissions();
+}
+
+if (window.hfInitPage) window.hfInitPage('leads', __hfInit_leads);
+else document.addEventListener('DOMContentLoaded', () => __hfInit_leads({ restore:false }), { once:true });
+
