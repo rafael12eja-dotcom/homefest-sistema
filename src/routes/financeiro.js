@@ -296,6 +296,70 @@ const schemaErr = (sub === 'ar' || sub === 'ap' || sub === 'resumo' || sub === '
         `).bind(status, pagoEm, forma, asInt(id, 0), auth.empresaId).run();
 
 
+        // Sync Caixa (idempotent) — Option B: when parcela is paid, create/update caixa entry.
+        // referencia = pagamento:{parcela_id}
+        try {
+          const pinfo = await env.DB.prepare(
+            `SELECT p.id AS parcela_id, p.numero, p.valor, p.status, p.pago_em, p.forma_pagamento,
+                    t.evento_id
+               FROM ar_parcelas p
+               JOIN ar_titulos t ON t.id=p.titulo_id AND t.empresa_id=p.empresa_id
+              WHERE p.id=? AND p.empresa_id=? AND p.ativo=1 AND t.ativo=1`
+          ).bind(asInt(id, 0), auth.empresaId).first();
+
+          if (pinfo?.evento_id) {
+            const ref = `pagamento:${pinfo.parcela_id}`;
+            const existing = await env.DB.prepare(
+              'SELECT id FROM caixa_lancamentos WHERE empresa_id=? AND referencia=? LIMIT 1'
+            ).bind(auth.empresaId, ref).first();
+
+            if (String(pinfo.status || '') === 'paga') {
+              const dataMov = toIsoDate(pinfo.pago_em) || toIsoDate(new Date());
+              const desc = `Recebimento parcela ${Number(pinfo.numero || 0)} (evento ${Number(pinfo.evento_id)})`;
+
+              if (existing?.id) {
+                await env.DB.prepare(
+                  `UPDATE caixa_lancamentos
+                      SET evento_id=?, tipo='entrada', categoria='recebimento', descricao=?, valor=?, data_movimento=?, metodo=?, ativo=1, atualizado_em=datetime('now')
+                    WHERE id=? AND empresa_id=?`
+                ).bind(
+                  asInt(pinfo.evento_id, 0),
+                  desc,
+                  Number(pinfo.valor || 0),
+                  dataMov,
+                  pinfo.forma_pagamento || null,
+                  asInt(existing.id, 0),
+                  auth.empresaId
+                ).run();
+              } else {
+                await env.DB.prepare(
+                  `INSERT INTO caixa_lancamentos (empresa_id, evento_id, tipo, categoria, descricao, valor, data_movimento, metodo, referencia, ativo)
+                   VALUES (?,?,?,?,?,?,?,?,?,1)`
+                ).bind(
+                  auth.empresaId,
+                  asInt(pinfo.evento_id, 0),
+                  'entrada',
+                  'recebimento',
+                  desc,
+                  Number(pinfo.valor || 0),
+                  dataMov,
+                  pinfo.forma_pagamento || null,
+                  ref
+                ).run();
+              }
+            } else {
+              // If parcela is not paid anymore (aberta/cancelada), deactivate caixa entry if it exists.
+              if (existing?.id) {
+                await env.DB.prepare(
+                  `UPDATE caixa_lancamentos SET ativo=0, atualizado_em=datetime('now')
+                    WHERE id=? AND empresa_id=?`
+                ).bind(asInt(existing.id, 0), auth.empresaId).run();
+              }
+            }
+          }
+        } catch (_) { /* best-effort */ }
+
+
         // Automação: se todas parcelas do título estiverem pagas, marcar título como quitado (senão, aberto)
         try {
           const t = await env.DB.prepare(

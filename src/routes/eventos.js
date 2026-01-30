@@ -220,6 +220,138 @@ if (id && parts[3] === 'equipe') {
 }
 
 
+
+
+// A/R (Option B) — Generate and list parcelas for an event (Phase 3.5+)
+// POST /api/eventos/:id/gerar-parcelas
+if (id && parts[3] === 'gerar-parcelas' && request.method === 'POST') {
+  const finPermErr = await requirePermission(env, auth, 'financeiro', 'write');
+  if (finPermErr) return finPermErr;
+
+  // Ensure finance schema exists
+  const hasAR = await env.DB.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='ar_titulos'"
+  ).first();
+  if (!hasAR) {
+    return fail(500, 'MIGRATION_REQUIRED',
+      "Financeiro precisa das migrations do PASSO 5 aplicadas no D1 (ex.: wrangler d1 migrations apply homefest-db --remote)."
+    );
+  }
+
+  const ev = await env.DB.prepare(
+    'SELECT id, valor_total, data_evento FROM eventos WHERE id=? AND empresa_id=? AND ativo=1'
+  ).bind(id, auth.empresaId).first();
+  if (!ev) return fail(404, 'NOT_FOUND', 'Evento não encontrado');
+
+  const total = Number(ev.valor_total || 0);
+  if (!(total > 0)) return fail(422, 'VALIDATION_ERROR', 'Evento sem valor_total (contrato)');
+
+  function toIsoDate(d) {
+    const dt = (d instanceof Date) ? d : new Date(d);
+    if (Number.isNaN(dt.getTime())) return null;
+    return dt.toISOString().slice(0, 10);
+  }
+  function addDays(iso, days) {
+    const dt = new Date(iso + 'T00:00:00Z');
+    if (Number.isNaN(dt.getTime())) return null;
+    dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+    return dt.toISOString().slice(0, 10);
+  }
+  function addDaysFromToday(days) {
+    const today = toIsoDate(new Date());
+    return addDays(today, days);
+  }
+  function toCents(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 0;
+    return Math.round(n * 100);
+  }
+  function fromCents(cents) {
+    const n = Number(cents);
+    if (!Number.isFinite(n)) return 0;
+    return Math.round(n) / 100;
+  }
+
+  const totalCents = toCents(total);
+  const firstCents = Math.floor(totalCents / 2);
+  const secondCents = totalCents - firstCents;
+
+  const hoje = toIsoDate(new Date());
+  const venc1 = hoje;
+  let venc2 = null;
+  const dataEv = ev.data_evento ? String(ev.data_evento) : null;
+  if (dataEv && /^\d{4}-\d{2}-\d{2}$/.test(dataEv)) {
+    // 10 days before event
+    const dt = new Date(dataEv + 'T00:00:00Z');
+    dt.setUTCDate(dt.getUTCDate() - 10);
+    venc2 = dt.toISOString().slice(0, 10);
+  } else {
+    venc2 = addDaysFromToday(30);
+  }
+
+  // Ensure title exists (one active title per event)
+  let titulo = await env.DB.prepare(
+    "SELECT id FROM ar_titulos WHERE empresa_id=? AND evento_id=? AND ativo=1 ORDER BY id DESC LIMIT 1"
+  ).bind(auth.empresaId, id).first();
+
+  let tituloId = titulo?.id;
+  if (!tituloId) {
+    const ins = await env.DB.prepare(
+      "INSERT INTO ar_titulos (empresa_id, evento_id, descricao, valor_total, status, ativo) VALUES (?,?,?,?, 'aberto', 1) RETURNING id"
+    ).bind(auth.empresaId, id, 'Recebível (50/50 padrão)', total).first();
+    tituloId = ins?.id;
+  } else {
+    await env.DB.prepare(
+      "UPDATE ar_titulos SET valor_total=?, status='aberto', atualizado_em=datetime('now') WHERE id=? AND empresa_id=? AND ativo=1"
+    ).bind(total, tituloId, auth.empresaId).run();
+  }
+
+  // Upsert parcelas 1 and 2 (do not overwrite paid parcelas)
+  async function upsertParcela(numero, vencimento, valor) {
+    const existing = await env.DB.prepare(
+      "SELECT id, status FROM ar_parcelas WHERE empresa_id=? AND titulo_id=? AND numero=? AND ativo=1 LIMIT 1"
+    ).bind(auth.empresaId, tituloId, numero).first();
+
+    if (existing?.id) {
+      if (String(existing.status || '') === 'paga') return; // preserve paid parcela
+      await env.DB.prepare(
+        "UPDATE ar_parcelas SET vencimento=?, valor=?, status='aberta', atualizado_em=datetime('now') WHERE id=? AND empresa_id=? AND ativo=1"
+      ).bind(vencimento, Number(valor || 0), existing.id, auth.empresaId).run();
+    } else {
+      await env.DB.prepare(
+        "INSERT INTO ar_parcelas (empresa_id, titulo_id, numero, vencimento, valor, status, ativo) VALUES (?,?,?,?,?,'aberta',1)"
+      ).bind(auth.empresaId, tituloId, numero, vencimento, Number(valor || 0)).run();
+    }
+  }
+
+  await upsertParcela(1, venc1, fromCents(firstCents));
+  await upsertParcela(2, venc2, fromCents(secondCents));
+
+  await logAudit(env, request, auth, { modulo: 'financeiro', acao: 'create', entidade: 'ar_titulos', entidadeId: tituloId });
+  return ok({ titulo_id: tituloId });
+}
+
+// GET /api/eventos/:id/parcelas
+if (id && parts[3] === 'parcelas' && request.method === 'GET') {
+  const finPermErr = await requirePermission(env, auth, 'financeiro', 'read');
+  if (finPermErr) return finPermErr;
+
+  const hasAR = await env.DB.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='ar_titulos'"
+  ).first();
+  if (!hasAR) return json([]); // fail-open: no schema yet
+
+  const titulo = await env.DB.prepare(
+    "SELECT id FROM ar_titulos WHERE empresa_id=? AND evento_id=? AND ativo=1 ORDER BY id DESC LIMIT 1"
+  ).bind(auth.empresaId, id).first();
+  if (!titulo?.id) return json([]);
+
+  const { results } = await env.DB.prepare(
+    "SELECT id, numero, vencimento, valor, status, pago_em, forma_pagamento, observacao FROM ar_parcelas WHERE empresa_id=? AND titulo_id=? AND ativo=1 ORDER BY numero ASC, id ASC"
+  ).bind(auth.empresaId, titulo.id).all();
+  return json(results || []);
+}
+
   
 // EVENT FINANCIAL SUMMARY (Phase 3.5)
 // GET /api/eventos/:id/resumo-financeiro
@@ -282,6 +414,21 @@ if (id && parts[3] === 'resumo-financeiro') {
     ? Number(((lucro_estimado / receita_base) * 100).toFixed(2))
     : 0;
 
+
+  // Recebido / a receber (Option B when A/R exists; fallback to caixa/contrato)
+  let recebido_total = 0;
+  let a_receber_total = 0;
+  if (parcelas_total !== null && parcelas_pagas_total !== null) {
+    recebido_total = Number(parcelas_pagas_total || 0);
+    a_receber_total = Number(Math.max(Number(parcelas_total || 0) - recebido_total, 0).toFixed(2));
+  } else {
+    recebido_total = entradas_total;
+    a_receber_total = (receita_contratada > 0)
+      ? Number(Math.max(receita_contratada - entradas_total, 0).toFixed(2))
+      : 0;
+  }
+
+
   return json({
     ok: true,
     evento_id: Number(id),
@@ -294,6 +441,8 @@ if (id && parts[3] === 'resumo-financeiro') {
     custo_operacional,
     lucro_estimado,
     margem_percentual,
+    recebido_total,
+    a_receber_total,
     pagamentos: (parcelas_total === null) ? null : {
       parcelas_total,
       parcelas_pagas_total
